@@ -19,3 +19,7 @@ license-files = ["LICEN[CS]E*"]
 [project.urls]
 Homepage = "https://github.com/tarza17/PyMOODENG"
 Issues = "https://github.com/tarza17/PyMOODENG/issues"
+
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
