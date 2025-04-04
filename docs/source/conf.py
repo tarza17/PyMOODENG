@@ -23,8 +23,6 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
-    'numpydoc',
-    'sphinx_gallery.gen_gallery',
 ]
 
 templates_path = ['_templates']
