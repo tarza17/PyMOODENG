@@ -42,4 +42,4 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'groundwork'
-html_theme_path = []
+html_theme_path = ['.']
