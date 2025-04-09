@@ -20,14 +20,52 @@ from scipy.constants import pi
 
 MAX_ITER = 100
 
-# Exceptions
+# Custom exception Exception
 
 class ConvergenceError(Exception):
     pass
 
 
-class OrbitalWarning(Warning):
-    pass
+#Anomaly class
+
+class Anomaly(object):
+    '''
+    Class representing an anomaly (mean, eccentric, or true)
+    '''
+    def __init__(self, **kwargs):
+        super()().__init__()
+        
+        valid_args = set(['M' , 'E' , 'theta'])
+
+        extra_args = set(kwargs.keys()) - valid_args
+        if extra_args:
+            raise TypeError('Invalid arguments: {}'.format(extra_args))
+        if not kwargs:
+            raise TypeError('No arguments provided.')
+        
+    def M(self, e):
+        if self.key == 'M':
+            return self.anomaly
+        if self.key == 'E':
+            return mean_anomaly_from_eccentric(e, self.anomaly)
+        if self.key == 'theta':
+            return mean_anomaly_from_true(e, self.anomaly)
+        
+    def E(self, e):
+        if self.key == 'M':
+            return eccentric_anomaly_from_mean(e, self.anomaly)
+        elif self.key == 'E':
+            return self.anomaly
+        elif self.key == 'theta':
+            return eccentric_anomaly_from_true(e, self.anomaly)
+        
+    def theta(self, e):
+        if self.key == 'M':
+            return true_anomaly_from_mean(e, self.anomaly)
+        elif self.key == 'E':
+            return true_anomaly_from_eccentric(e, self.anomaly)
+        elif self.key == 'theta':
+            return self.anomaly
 
 #Anomaly calcs
 
@@ -97,7 +135,13 @@ def true_anomaly_from_mean(e, M, tolerance=1e-10):
     theta = true_anomaly_from_eccentric(e, E)
     return theta
 
- 
+
+
+
+
+
+
+
 
 
 
