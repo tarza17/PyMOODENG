@@ -1,6 +1,23 @@
+#IMPORTS
+
+from __future__ import absolute_import, division, print_function
+
+import numpy as np
+from numpy import atan2, floor, fmod, ising, isnan
+from numpy import arrcos as acos
+from numpy import cos, dot, sin, sqrt
+from numpy.linalg import norm
+#from math import atan2, floor, fmod, ising, isnan #chatqpt advice
+from scipy.constants import pi
+
 #Orbital element 
 
-
+def orbit_radius(a, e, theta)
+    '''
+    Calc orbit radius from semi-major axis, eccentricity and true anomaly
+    '''
+    r = a * (1 - e^2) / (1 + e * cos(theta))
+    return r
 
 
 
