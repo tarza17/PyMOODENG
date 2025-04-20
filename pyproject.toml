@@ -23,3 +23,6 @@ Issues = "https://github.com/tarza17/PyMOODENG/issues"
 [build-system]
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+docs = ["sphinx", "sphinx_rtd_theme"]

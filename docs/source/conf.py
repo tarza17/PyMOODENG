@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'pyMOODENG'
-copyright = '2025, Kiss Márkus'
+copyright = '2025, Kiss Márkus, Tari Zalán, Varga Benedek'
 authors = 'Kiss Márkus, Tari Zalán, Varga Benedek'
 
 
@@ -41,5 +41,5 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'groundwork'
-html_theme_path = ['.']
+html_theme = 'sphinx_rtd_theme'
+html_static_path = ['_static']
