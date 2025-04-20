@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'pyMOODENG'
-copyright = '2025, Kiss Márkus'
+copyright = '2025, Kiss Márkus, Tari Zalán, Varga Benedek'
 authors = 'Kiss Márkus, Tari Zalán, Varga Benedek'
 
 
