@@ -1,16 +1,16 @@
 [project]
-name = "Monitoring Orbitals Of Dynamic Environments, Navigating Galaxies"
+name = "pymoodeng"#"Monitoring Orbitals Of Dynamic Environments, Navigating Galaxies"
 version = "0.0.1"
 authors = [
-  { name="Tari Zalán", email="author@example.com" },
-  { name="Varga Benedek", email="author@example.com" },
-  { name="Kiss Márkus", email="kiss.markus@hallgato.ppjke.hu" }
+  { name="Tari Zalán", email="tari.zalan@itk.ppke.hu" },
+  { name="Varga Benedek", email="varga.benedek@hallgato.ppke.hu" },
+  { name="Kiss Márkus", email="kiss.markus@hallgato.ppke.hu" }
 ]
 description = "A Python package for simple system simulations and potential transition fuel calculations."
 readme = "README.md"
-requires-python = ">=3.12.7"
+requires-python = ">=3.12"
 classifiers = [
-    "Programming Language :: Python :: 3.12.7",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
 ]
 license = "MIT"
