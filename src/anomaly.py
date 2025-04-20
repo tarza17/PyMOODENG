@@ -8,6 +8,8 @@ from __future__ import absolute_import, division, print_function
 from collections import namedtuple
 from contextlib import contextmanager
 from copy import deepcopy
+from typing import Literal
+from dataclasses import dataclass
 
 
 import numpy as np
@@ -27,11 +29,11 @@ class ConvergenceError(Exception):
 
 
 #Anomaly class
-
+'''
 class Anomaly(object):
     '''
-    Class representing an anomaly (mean, eccentric, or true)
-    '''
+   # Class representing an anomaly (mean, eccentric, or true)
+'''
     def __init__(self, **kwargs):
         super()().__init__()
         
@@ -66,6 +68,42 @@ class Anomaly(object):
             return true_anomaly_from_eccentric(e, self.anomaly)
         elif self.key == 'theta':
             return self.anomaly
+'''
+
+@dataclass
+class Anomaly:
+    value: float
+    type: Literal['M', 'E', 'theta']
+
+    def __post_init__(self):
+        valid_types = {'M', 'E', 'theta'}
+        if self.type not in valid_types:
+            raise ValueError(f"Invalid anomaly type: '{self.type}'. Must be one of {valid_types}.")
+
+    def M(self, e: float) -> float:
+        if self.type == 'M':
+            return self.value
+        elif self.type == 'E':
+            return mean_anomaly_from_eccentric(e, self.value)
+        elif self.type == 'theta':
+            return mean_anomaly_from_true(e, self.value)
+
+    def E(self, e: float) -> float:
+        if self.type == 'M':
+            return eccentric_anomaly_from_mean(e, self.value)
+        elif self.type == 'E':
+            return self.value
+        elif self.type == 'theta':
+            return eccentric_anomaly_from_true(e, self.value)
+
+    def theta(self, e: float) -> float:
+        if self.type == 'M':
+            return true_anomaly_from_mean(e, self.value)
+        elif self.type == 'E':
+            return true_anomaly_from_eccentric(e, self.value)
+        elif self.type == 'theta':
+            return self.value
+
 
 #Anomaly calcs
 
