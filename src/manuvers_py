@@ -1,0 +1,151 @@
+import warnings
+from copy import copy
+
+from numpy import allclose as almost_equal
+from scipy.constants import pi
+
+from . import orbital+conversions as oc
+from .orbital+conversions import (
+    elements_4_apsides, radius_from_alt, alt_from_radius, impulse_from_finite, saved_state)
+
+from . import anomaly as anom
+from .anomaly import (
+     mean_anomaly_from_eccentric, mean_anomaly_from_true)   
+
+
+#ez most máshonnan veszem 
+
+class Operation(object):
+
+    def plot(self, orbit, plotter, next_operation=None):
+        """Plot the operation on the given orbit using the provided plotter."""
+        if hasattr(self, '__plot__') and callable(getattr(self, '__plot__')):
+            self.__plot__(orbit, plotter, next_operation)
+
+    def __add__(self, other):
+        """Add two operations together."""
+        if isinstance(other, Operation):
+            return Maneuver(self, other)
+        else:
+            return NotImplementedError()
+        
+    def __radd__(self, other):
+        """Right add two operations together."""
+        if isinstance(other, Operation):
+            return Maneuver(other, self)
+        else:
+            return NotImplementedError()
+        
+class ImpulseOperation(Operation):
+    """Class representing an impulse operation."""
+
+    def __init__(self):
+        super(ImpulseOperation, self).__init__()
+
+    def velocity(self):
+        """Return the velocity of the impulse operation."""
+        raise NotImplementedError()
+    
+class TimeOperation(Operation):
+    """Class representing a time operation."""
+
+    def __init__(self, time):
+        super(TimeOperation, self).__init__()
+        self.time = time
+
+    def time(self):
+        """Return the time of the operation."""
+        raise NotImplementedError()
+    
+class SetApocenterRadiusTo(ReprHelperMixin, ImpulseOperation): 
+    """Class representing an operation to set the apocenter radius."""
+
+    def __init__(self, apocenter_radius, **kwargs):
+        super(SetApocenterRadiusTo, self).__init__()
+        self.apocenter_radius = apocenter_radius
+        #self.kwargs = kwargs
+
+    def __repr__(self):
+        return f"SetApocenterRadiusTo(radius={self.radius}, kwargs={self.kwargs})"
+    
+    def __apply__(self, orbit):
+        a , e = elements_4_apsides(self.apocenter_radius, orbit.pericenter_radius)
+
+        orbit.a = a
+        orbit.e = e
+
+        orbit.v = orbit.v
+
+    def __plot__(self, orbit, plotter, next_operation=None):
+        if orbit.apocenter_radius > self.apocenter_radius:
+            label = 'Apocenter radius decreased'
+        else:
+            label = 'Apocenter radius increased'
+        self.__apply__(orbit)
+       
+        """Plot the operation on the given orbit using the provided plotter."""
+        with saved_state(orbit):
+            if (next_operation is not None and
+                isinstance(next_operation, TimeOperation)):
+                orbit.apply_maneuver(next_operation)
+                f2 = orbit.theta
+                if f2  == 0:
+                    f2 = 2 * pi
+                else:
+                    f2 = 2 * pi
+
+        plotter.plot_apsides(orbit ,f1=0,  f2=f2 , label=label)
+
+
+    def velocity(self, orbit):
+        with saved_state(orbit):
+            # get veloctiy and pericenter
+            orbit.propagate_anomaly_to(M=0)
+            old_v = orbit.v
+
+            a, e = elements_4_apsides(self.apocenter_radius, orbit.pericenter_radius)
+
+            orbit.semi_major_axis = a
+            orbit.eccentricity = e
+
+            new_v = orbit.v
+
+        return new_v - old_v
+      
+
+    def represnetation_helper(self , r):
+        r.positional_from_attr('apocenter_atlitude')
+
+class ChangeApocenterBy(ReprHelperMixin, ImpulseOperation): 
+    '''Operation for changing apocenter radius, when applied must be at orpbital pericenter.'''
+    
+    def __init__(self, delta):
+        super(ChangeApocenterBy, self).__init__()
+        self.delta = delta
+
+    def __apply__(self, orbit):
+        a, e = elements_4_apsides(orbit.apocenter_radius + self.delta, orbit.pericenter_radius)
+    
+        orbit.a = a
+        orbit.e = e
+
+        orbit.v = orbit.v
+
+    def __plot__(self, orbit, plotter, next_operation=None):
+        if self.delta > 0:
+            label = 'Apocenter radius increased'
+        else:
+            label = 'Apocenter radius decreased'
+        self.__apply__(orbit)
+
+        with saved_state(orbit):
+            if (next_operation is not None and
+                isinstance(next_operation, TimeOperation)):
+                orbit.apply_maneuver(next_operation)
+                f2 = orbit.theta
+                if f2  == 0:
+                    f2 = 2 * pi
+                else:
+                    f2 = 2 * pi
+
+        plotter._plot_apsides(orbit ,f1=0,  f2=f2 , label=label)

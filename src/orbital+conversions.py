@@ -3,6 +3,8 @@
 from __future__ import absolute_import, division, print_function
 from dataclasses import dataclass
 from typing import Tuple
+from contextlib import contextmanager
+from copy import deepcopy
 
 import numpy as np
 from numpy import atan2, floor, fmod, ising, isnan
@@ -11,6 +13,28 @@ from numpy import cos, dot, sin, sqrt
 from numpy.linalg import norm
 #from math import atan2, floor, fmod, ising, isnan #chatqpt advice
 from scipy.constants import pi
+
+
+# Generator and context manager
+
+@contextmanager
+def saved_state(orbit):
+    """Context manager to restore orbit upon leaving the block."""
+    state = deepcopy(orbit.__dict__)
+    yield
+    orbit.__dict__.update(state)
+
+
+def lookahead(collection, fillvalue=None):
+    """Generates a series with lookahead to the next item."""
+    first = True
+    for next_item in collection:
+        if first:
+            first = False
+        else:
+            yield current_item, next_item
+        current_item = next_item
+    yield current_item, fillvalue
 
 
 # 3d vector class for easy shenanigans #gpt advice
