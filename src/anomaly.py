@@ -10,15 +10,14 @@ from contextlib import contextmanager
 from copy import deepcopy
 from typing import Literal
 from dataclasses import dataclass
-
-
 import numpy as np
-from numpy import atan2, floor, fmod, ising, isnan
-from numpy import arrcos as acos
-from numpy import cos, dot, sin, sqrt
-from numpy.linalg import norm
-#from math import atan2, floor, fmod, ising, isnan #chatqpt advice
-from scipy.constants import pi
+
+# from numpy import atan2, floor, fmod, ising, isnan
+# from numpy import arrcos as acos
+# from numpy import cos, dot, sin, sqrt
+# from numpy.linalg import norm
+# #from math import atan2, floor, fmod, ising, isnan #chatqpt advice
+#from scipy.constants import pi
 
 MAX_ITER = 100
 
@@ -111,14 +110,14 @@ def eccentric_anomaly_from_mean(e, M, tolerance=1e-10):
     '''
     Calc eccenetric anomaly from mean anomaly
     '''
-    Mnorm = fmod(M, 2 * pi)
-    E0 = M + (-1 / 2 * e^3 + e + (e^2 + 3 / 2 * cos(M) * e ** 3) * cos(M)) * sin(M)
+    Mnorm = np.fmod(M, 2 * np.pi)
+    E0 = M + (-1 / 2 * e**3 + e + (e**2 + 3 / 2 * np.cos(M) * e ** 3) * np.cos(M)) * np.sin(M)
     dE = tolerance + 1
     count = 0
     while dE > tolerance:
-        t1 = cos(E0)
+        t1 = np.cos(E0)
         t2 = -1 + e * t1
-        t3 = sin(E0)
+        t3 = np.sin(E0)
         t4 = e * t3
         t5 = -E0 + t4 + Mnorm
         t6 = t5 / (1 / 2 * t5 * t4 / t2 + t2)
@@ -135,16 +134,16 @@ def eccentric_anomaly_from_true(e, theta):
     '''
     Calc eccenetric anomaly from true anomaly
     '''
-    E = atan2(sqrt(1 - e^2) * sin(theta), cos(theta) + e)
-    E = mod(E, 2 * pi)
+    E = np.atan2(np.sqrt(1 - e**2) * np.sin(theta), np.cos(theta) + e)
+    E = np.mod(E, 2 * np.pi)
     return E
 
 def mean_anomaly_from_eccentric(e, E):
     '''
     Calc mean anomaly from eccenetric anomaly
     '''
-    M = E - e * sin(E)
-    M = mod(M, 2 * pi)
+    M = E - e * np.sin(E)
+    M = np.mod(M, 2 * np.pi)
     return M
 
 
@@ -153,16 +152,16 @@ def mean_anomaly_from_true(e, theta):
     Calc mean anomaly from true anomaly
     '''
     E = eccentric_anomaly_from_true(e, theta)
-    M = E - e * sin(E)
-    M = mod(M, 2 * pi)
+    M = E - e * np.sin(E)
+    M = np.mod(M, 2 * np.pi)
     return M
 
 def true_anomaly_from_eccentric(e, E):
     '''
     Calc true anomaly from eccenetric anomaly
     '''
-    theta = atan2(sqrt(1 - e^2) * sin(E), cos(E) + e)
-    theta = mod(theta, 2 * pi)
+    theta = np.atan2(np.sqrt(1 - e**2) * np.sin(E), np.cos(E) + e)
+    theta = np.mod(theta, 2 * np.pi)
     return theta
 
 def true_anomaly_from_mean(e, M, tolerance=1e-10):
