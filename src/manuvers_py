@@ -503,7 +503,7 @@ class PropagateAnomalyTo(ReprHelperMixin, TimeOperation):
 #########################################################################
 #########################################################################
 
-def time(self, oribit):
+def time(self, orbit):
 
     if self.key == 'M':
         M = self.anomaly
