@@ -1,10 +1,12 @@
+from platform import system
+
 import constants
 import anomaly
 import numpy as np
 
 def current_radius(r_p, e, theta):
   """
-  Calculate current radius from percenter radius, eccentricity, and true anomaly.
+  Calculate current radius from perihelion radius, eccentricity, and true anomaly.
   """
   r = r_p*(1 + e) / (1 + e * np.cos(theta))
   return r
@@ -52,6 +54,8 @@ class Body:
         self.x = self.x + c_x # Global x coordinate
         self.y = r * np.sin(true_anomaly)    # Local y coordinate
         self.y = self.y + c_y # Global y coordinate
+  def get_bodies(self):
+        return self
 
 class System:
     def __init__(self, center, orbiting=None):
@@ -63,7 +67,16 @@ class System:
             bodies (list of Body, optional): List of bodies orbiting the center. Defaults to None.
         """
         self.center = center
-        self.orbiting_objects = orbiting if orbiting is not None else []
+        # self.orbiting_objects = orbiting if orbiting is not None else []
+        if orbiting is not None:
+            if isinstance(orbiting, System or Body):
+                self.orbiting_objects= [orbiting]
+            else: self.orbiting_objects = orbiting
+        else: self.orbiting_objects = []
+        self.all_bodies = [center]
+
+        for body in self.orbiting_objects:
+            self.all_bodies.append(body.get_bodies())
 
     def add_body_or_system(self, body):
         self.orbiting_objects.append(body)
@@ -87,6 +100,10 @@ class System:
         for obj in self.orbiting_objects:
           obj.update(t, self.center.x, self.center.y)
 
+    def get_bodies(self):
+       # return [self.center].append(self.orbiting_objects)
+        return self.all_bodies
+
 class Universe:
     def __init__(self, systems=None):
         """
@@ -98,10 +115,16 @@ class Universe:
         if systems is None:
             systems = []
         self.all_elements = systems
+        self.all_bodies = []
+        for system in self.all_elements:
+            self.all_bodies.append(system.get_bodies())
 
     def update(self, time):
         for elem in self.all_elements:
           elem.update(time, 0.0, 0.0)
+
+    def get_bodies(self):
+        return self.all_bodies[0]
 
 Sun = Body(
     name = "Sun",
