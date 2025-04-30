@@ -7,8 +7,8 @@ from contextlib import contextmanager
 from copy import deepcopy
 
 import numpy as np
-from numpy import atan2, floor, fmod, ising, isnan
-from numpy import arrcos as acos
+from numpy import atan2, floor, fmod, isin, isnan
+from numpy import arccos as acos
 from numpy import cos, dot, sin, sqrt
 from numpy.linalg import norm
 #from math import atan2, floor, fmod, ising, isnan #chatqpt advice

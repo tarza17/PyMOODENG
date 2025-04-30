@@ -4,3 +4,4 @@ matplotlib >= 3.10.1
 pyqt5  >= 5.15.11
 sphinx >= 8.2.3
 sphinx_rtd_theme >= 3.0.2
+pytest >= 8.3.5
