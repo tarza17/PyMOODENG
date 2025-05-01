@@ -46,16 +46,17 @@ class Body:
           self.x = 0.0  # Initial x-coordinate
         self.y = 0.0  # Initial y-coordinate
 
-  def update(self, t, c_x = 0.0 , c_y = 0.0):
+  def update(self, t, c_x = 0.0 , c_y = 0.0, logarithmic = False, depth = 1):
         mean_anomaly = t * 2 * np.pi / self.orbit.tp # Mean anomaly is always 0 at t=0 (-> no addition of it here)
         true_anomaly = anomaly.Anomaly(mean_anomaly, type = 'M').theta(self.orbit.e)
-        if False:
-            true_anomaly = mean_anomaly
         r = current_radius(self.orbit.peri_r,self.orbit.e, true_anomaly)
+        if logarithmic:
+            r = np.log10(r) / depth
         self.x = r * np.cos(true_anomaly) # Local x coordinate
         self.x = self.x + c_x # Global x coordinate
         self.y = r * np.sin(true_anomaly)    # Local y coordinate
         self.y = self.y + c_y # Global y coordinate
+
   def get_bodies(self):
         return [self]
 
@@ -96,14 +97,15 @@ class System:
         self.center.x = coords[0]
         self.center.y = coords[1]
 
-    def update(self, t, c_x, c_y):
+    def update(self, t, c_x, c_y, logarithmic = False, depth = 0):
         if self.center.orbit:
-          self.center.update(t, c_x, c_y)
+          self.center.update(t, c_x, c_y, logarithmic)
         else:
           self.center.x = c_x
           self.center.y = c_y
+        depth = depth + 1
         for obj in self.orbiting_objects:
-          obj.update(t, self.center.x, self.center.y)
+          obj.update(t, self.center.x, self.center.y, logarithmic, depth)
 
     def get_bodies(self):
        # return [self.center].append(self.orbiting_objects)
@@ -136,9 +138,9 @@ class Universe:
         for elem in self.all_elements:
             self.all_bodies.extend(elem.get_bodies())
 
-    def update(self, time):
+    def update(self, time, logarithmic = False):
         for elem in self.all_elements:
-          elem.update(time, 0.0, 0.0)
+          elem.update(time, 0.0, 0.0, logarithmic)
 
     def get_bodies(self):
         return self.all_bodies
