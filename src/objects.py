@@ -49,13 +49,15 @@ class Body:
   def update(self, t, c_x = 0.0 , c_y = 0.0):
         mean_anomaly = t * 2 * np.pi / self.orbit.tp # Mean anomaly is always 0 at t=0 (-> no addition of it here)
         true_anomaly = anomaly.Anomaly(mean_anomaly, type = 'M').theta(self.orbit.e)
+        if False:
+            true_anomaly = mean_anomaly
         r = current_radius(self.orbit.peri_r,self.orbit.e, true_anomaly)
         self.x = r * np.cos(true_anomaly) # Local x coordinate
         self.x = self.x + c_x # Global x coordinate
         self.y = r * np.sin(true_anomaly)    # Local y coordinate
         self.y = self.y + c_y # Global y coordinate
   def get_bodies(self):
-        return self
+        return [self]
 
 class System:
     def __init__(self, center, orbiting=None):
@@ -69,14 +71,17 @@ class System:
         self.center = center
         # self.orbiting_objects = orbiting if orbiting is not None else []
         if orbiting is not None:
-            if isinstance(orbiting, System or Body):
+            if isinstance(orbiting, (System, Body)):
                 self.orbiting_objects= [orbiting]
-            else: self.orbiting_objects = orbiting
-        else: self.orbiting_objects = []
-        self.all_bodies = [center]
+            if isinstance(orbiting, (list, tuple)) and all(isinstance(item, (System, Body)) for item in orbiting):
+                self.orbiting_objects = orbiting
+        else:
+            self.orbiting_objects = []
 
-        for body in self.orbiting_objects:
-            self.all_bodies.append(body.get_bodies())
+#        self.all_bodies = [center]
+
+        # for body in self.orbiting_objects:
+        #     self.all_bodies.append(body.get_bodies())
 
     def add_body_or_system(self, body):
         self.orbiting_objects.append(body)
@@ -102,7 +107,10 @@ class System:
 
     def get_bodies(self):
        # return [self.center].append(self.orbiting_objects)
-        return self.all_bodies
+       bodies = [self.center]
+       for obj in self.orbiting_objects:
+           bodies.extend(obj.get_bodies())
+       return bodies
 
 class Universe:
     def __init__(self, systems=None):
@@ -112,19 +120,28 @@ class Universe:
         Args:
             systems : List of systems in the simulation.
         """
-        if systems is None:
+
+        # if systems is None:
+        #     systems = []
+        if systems is not None:
+            if isinstance(systems, (System, Body)):
+                systems = [systems]
+            if isinstance(systems, (list, tuple)) and all(isinstance(item, (System, Body)) for item in systems):
+                systems = systems
+        else:
             systems = []
+
         self.all_elements = systems
         self.all_bodies = []
-        for system in self.all_elements:
-            self.all_bodies.append(system.get_bodies())
+        for elem in self.all_elements:
+            self.all_bodies.extend(elem.get_bodies())
 
     def update(self, time):
         for elem in self.all_elements:
           elem.update(time, 0.0, 0.0)
 
     def get_bodies(self):
-        return self.all_bodies[0]
+        return self.all_bodies
 
 Sun = Body(
     name = "Sun",
@@ -218,6 +235,20 @@ Eris = Body(
     orbit=Orbit(constants.Eris_perihelion, constants.Eris_T, constants.Eris_e)
 )
 
+Moon2 = Body(
+    name = "Moon",
+    color = "grey",
+    mass = constants.Moon_m,
+    mean_diameter = constants.Moon_rm,
+    orbit = Orbit(constants.Moon_perihelion * 150, constants.Moon_T *2, constants.Moon_e * 0.2))
+
+Moon3 = Body(
+    name = "Moon",
+    color = "grey",
+    mass = constants.Moon_m,
+    mean_diameter = constants.Moon_rm * 0.6,
+    orbit = Orbit(constants.Moon_perihelion * 50, constants.Moon_T, constants.Moon_e))
+
 Solar_system = System(center = Sun, orbiting = [
     Mercury,
     Venus,
@@ -226,6 +257,16 @@ Solar_system = System(center = Sun, orbiting = [
     Jupiter,
     Saturn,
     Uranus,
-    Neptune,
-    Pluto,
-    Eris])
+    Neptune
+])
+
+EarthMoon = System(center = Earth, orbiting = Moon)
+
+Solar_system0 = System(center = Sun, orbiting = [
+    Mercury,
+    Venus,
+    EarthMoon,
+    Mars,
+])
+
+Dwarfs = System(center = Sun, orbiting = [Pluto, Eris])
