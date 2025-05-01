@@ -224,5 +224,5 @@ plt.show()
 
 print("Animation finished or window closed.")
 
-ani.save('solar_system_animation.mp4', fps=1000/INTERVAL_MS, dpi=150)
-print("Animation saved.")
+#ani.save('solar_system_animation.mp4', fps=1000/INTERVAL_MS, dpi=150)
+#print("Animation saved.")
