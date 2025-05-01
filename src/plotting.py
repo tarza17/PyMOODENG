@@ -64,7 +64,6 @@ if center_obj:
     c_display_radius = (center_obj.mean_diameter / 2.0) * scale
     c_x = center_obj.x # Get the center's actual calculated position
     c_y = center_obj.y
-    print(f"Center body's display radius calculated for shifting: {c_display_radius:.2e}")
 else:
     print("Warning: Center body not found. Cannot calculate shift.")
 
@@ -225,5 +224,5 @@ plt.show()
 
 print("Animation finished or window closed.")
 
-#ani.save('solar_system_animation.mp4', fps=1000/INTERVAL_MS, dpi=150)
-#print("Animation saved.")
+ani.save('solar_system_animation.mp4', fps=1000/INTERVAL_MS, dpi=150)
+print("Animation saved.")
