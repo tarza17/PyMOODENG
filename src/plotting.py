@@ -18,7 +18,7 @@ pan_info = {'button': None, 'start_x': None, 'start_y': None, 'current_xlim': No
 # Animation and simulation parameters
 SECONDS_PER_DAY = 24 * 3600
 START_DAY = 0
-END_DAY = 365*10
+END_DAY = 365*300
 
 # How many simulation days pass per animation frame
 DAYS_PER_FRAME = 1
@@ -335,7 +335,7 @@ def init():
     ax.set_ylim(min_y_init - y_range * padding, max_y_init + y_range * padding)
     '''
     # Set initial title
-    plot_title.set_text(f"Solar System at t = {START_DAY:.1f} days")
+    plot_title.set_text(f"Solar System at t = {START_DAY:.1f} days ({START_DAY/365.2425:.2f} years)")
     return plot_elements + trail_lines + [plot_title]
 
 
@@ -437,7 +437,7 @@ def animate(frame):
         apply_global_limits_with_padding()
 
     # Update the title
-    plot_title.set_text(f"Solar System at t = {current_day:.1f} days")
+    plot_title.set_text(f"Solar System at t = {current_day:.1f} days ({current_day/365.2425:.2f} years)")
 
         # Return iterable of plot elements that have been updated
     return plot_elements + trail_lines + [plot_title]
