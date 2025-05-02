@@ -47,11 +47,18 @@ class Body:
         self.y = 0.0  # Initial y-coordinate
 
   def update(self, t, c_x = 0.0 , c_y = 0.0, logarithmic = False, depth = 1):
+        # Check if orbit exists before trying to use it
+        if self.orbit is None:
+             self.x = c_x
+             self.y = c_y
+             return
+
         mean_anomaly = t * 2 * np.pi / self.orbit.tp # Mean anomaly is always 0 at t=0 (-> no addition of it here)
         true_anomaly = anomaly.Anomaly(mean_anomaly, type = 'M').theta(self.orbit.e)
         r = current_radius(self.orbit.peri_r,self.orbit.e, true_anomaly)
         if logarithmic:
             r = np.log10(r) / depth
+
         self.x = r * np.cos(true_anomaly) # Local x coordinate
         self.x = self.x + c_x # Global x coordinate
         self.y = r * np.sin(true_anomaly)    # Local y coordinate
@@ -96,7 +103,7 @@ class System:
     def set_center_pos(self, coords):
         self.center.x = coords[0]
         self.center.y = coords[1]
-
+    '''
     def update(self, t, c_x, c_y, logarithmic = False, depth = 0):
         if self.center.orbit:
           self.center.update(t, c_x, c_y, logarithmic)
@@ -106,6 +113,40 @@ class System:
         depth = depth + 1
         for obj in self.orbiting_objects:
           obj.update(t, self.center.x, self.center.y, logarithmic, depth)
+    '''
+
+    def update(self, t, c_x, c_y, logarithmic=False, depth=0):
+        # --- MODIFIED LOGIC for positioning the center ---
+        # Case 1: This system is a TOP-LEVEL system called by Universe (c_x, c_y are 0,0)
+        #         AND its center has an orbit defined (e.g., Earth in EarthMoon sim).
+        #         Force the center to stay at (0,0) for this context.
+        if depth == 0 and self.center.orbit:
+            self.center.x = 0.0
+            self.center.y = 0.0
+            # Do NOT call self.center.update() in this specific case.
+
+        # Case 2: The center body has an orbit defined AND it's NOT the specific case above
+        #         (i.e., this system is orbiting an outer center where c_x, c_y != 0,0).
+        #         Update the center's position based on its orbit relative to c_x, c_y.
+        elif self.center.orbit:
+            # Update center relative to the outer center c_x, c_y
+            # NOTE: Pass depth to Body.update if it uses it (it doesn't currently, but good practice)
+            self.center.update(t, c_x, c_y, logarithmic, depth)
+
+        # Case 3: The center body has NO orbit defined.
+        #         Place it exactly at the reference point c_x, c_y.
+        else:
+            self.center.x = c_x
+            self.center.y = c_y
+        # --- END MODIFIED LOGIC ---
+
+        # Now update all orbiting objects relative to the *final* position of the center
+        orbiting_center_x = self.center.x
+        orbiting_center_y = self.center.y
+        depth = depth + 1  # Increment depth for subsystems
+        for obj in self.orbiting_objects:
+            # Pass the calculated center position and incremented depth
+            obj.update(t, orbiting_center_x, orbiting_center_y, logarithmic, depth)
 
     def get_bodies(self):
        # return [self.center].append(self.orbiting_objects)
@@ -251,18 +292,22 @@ Moon3 = Body(
     mean_diameter = constants.Moon_rm * 0.6,
     orbit = Orbit(constants.Moon_perihelion * 50, constants.Moon_T, constants.Moon_e))
 
+EarthMoon = System(center = Earth, orbiting = Moon)
+
+SunEarthMoon = System(center = Sun, orbiting = EarthMoon)
+
 Solar_system = System(center = Sun, orbiting = [
     Mercury,
     Venus,
-    Earth,
+    EarthMoon,
     Mars,
     Jupiter,
     Saturn,
     Uranus,
-    Neptune
+    Neptune,
+    Pluto,
+    Eris
 ])
-
-EarthMoon = System(center = Earth, orbiting = Moon)
 
 Solar_system0 = System(center = Sun, orbiting = [
     Mercury,

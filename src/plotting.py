@@ -8,6 +8,9 @@ from collections import deque
 
 matplotlib.use("TkAgg")
 
+# Creating the universe containing the desired system(s)
+sim = objects.Universe([objects.Solar_system])
+
 # Interaction State
 user_interacting = False
 pan_info = {'button': None, 'start_x': None, 'start_y': None, 'current_xlim': None, 'current_ylim': None}
@@ -24,14 +27,10 @@ DAYS_PER_FRAME = 1
 INTERVAL_MS = 20
 
 # Orbital Trail Settings
-MAX_TRAIL_POINTS = 2000
+MAX_TRAIL_POINTS = None
 TRAIL_COLOR = 'white'
 TRAIL_LINEWIDTH = 0.5
 TRAIL_ALPHA = 0.7
-
-
-# Creating the universe containing the desired system(s)
-sim = objects.Universe([objects.Solar_system])
 
 # Plotting setup
 fig, ax = plt.subplots(figsize=(15,15))
@@ -60,7 +59,7 @@ ax.spines['left'].set_color('white')
 ax.spines['right'].set_color('white')
 
 # Scaling factor for body sizes
-scale = 8000
+scale = 5000
 
 # Global list to hold plot elements
 plot_elements = []
@@ -351,10 +350,6 @@ def animate(frame):
     # Update simulation state
     sim.update(current_time_seconds, logarithmic=False)
 
-    # Variables to track plot extents for this frame
-    min_x, max_x = np.inf, -np.inf
-    min_y, max_y = np.inf, -np.inf
-
     # Get center's current position for shifting calculations in this frame
     c_x_now, c_y_now = (0.0,0.0)
     if center_obj:
@@ -417,11 +412,11 @@ def animate(frame):
             frame_min_y = min(frame_min_y, py - radius)
             frame_max_y = max(frame_max_y, py + radius)
 
-        if not np.isinf(min_x):  # Ensure we got valid numbers this frame
-            global_min_x = min(global_min_x, min_x)
-            global_max_x = max(global_max_x, max_x)
-            global_min_y = min(global_min_y, min_y)
-            global_max_y = max(global_max_y, max_y)
+        if not np.isinf(frame_min_x):  # Ensure we got valid numbers this frame
+            global_min_x = min(global_min_x, frame_min_x)
+            global_max_x = max(global_max_x, frame_max_x)
+            global_min_y = min(global_min_y, frame_min_y)
+            global_max_y = max(global_max_y, frame_max_y)
 
             # Update dynamic limits with padding
             '''
