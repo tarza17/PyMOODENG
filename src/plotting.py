@@ -4,12 +4,14 @@ import matplotlib.patches as patches
 import matplotlib.animation as animation
 import matplotlib
 import objects
+from collections import deque
+
 matplotlib.use("TkAgg")
 
 # Animation and simulation parameters
 SECONDS_PER_DAY = 24 * 3600
 START_DAY = 0
-END_DAY = 730
+END_DAY = 100000
 
 # How many simulation days pass per animation frame
 DAYS_PER_FRAME = 1
@@ -17,9 +19,15 @@ DAYS_PER_FRAME = 1
 # Animation speed control (milliseconds between frames)
 INTERVAL_MS = 20
 
+# Orbital Trail Settings
+MAX_TRAIL_POINTS = 2000
+TRAIL_COLOR = 'white'
+TRAIL_LINEWIDTH = 0.5
+TRAIL_ALPHA = 0.7
+
 
 # Creating the universe containing the desired system(s)
-sim = objects.Universe([objects.Solar_system])
+sim = objects.Universe([objects.Solar_system0])
 
 # Plotting setup
 fig, ax = plt.subplots(figsize=(10,10))
@@ -48,32 +56,83 @@ ax.spines['left'].set_color('white')
 ax.spines['right'].set_color('white')
 
 # Scaling factor for body sizes
-scale = 5000
+scale = 8000
 
 # Global list to hold plot elements
 plot_elements = []
+trail_lines = []
+trajectory_history = {}
+
 bodies_to_plot = sim.get_bodies()
+
+# Variables for sticky axes
+global_min_x, global_max_x = np.inf, -np.inf
+global_min_y, global_max_y = np.inf, -np.inf
+limits_initialized = False # Flag to track if initial limits are set
+padding = 0.15
 
 c_display_radius = 0.0
 c_x, c_y = 0.0, 0.0
+center_obj = None
 
-# Find the center body of the plotted system
-center_obj = next((b for b in bodies_to_plot if b.name == objects.Solar_system.center.name), None)
+# Heuristic to find the "main" center if multiple systems exist
+# Prefers the center of the first system in the universe list
+if sim.all_elements and isinstance(sim.all_elements[0], objects.System):
+    center_obj_candidate = sim.all_elements[0].center
+    # Verify it's actually in the list of bodies to plot
+    center_obj = next((b for b in bodies_to_plot if b.name == center_obj_candidate.name), None)
+
 if center_obj:
     # Calculate the radius the center body will be displayed with
     c_display_radius = (center_obj.mean_diameter / 2.0) * scale
-    c_x = center_obj.x # Get the center's actual calculated position
-    c_y = center_obj.y
+    # We'll get its actual position during the t=0 update in init()
 else:
-    print("Warning: Center body not found. Cannot calculate shift.")
+    print("Warning: Center body for shifting not definitively identified. Shifting might be inconsistent.")
+
+def apply_global_limits_with_padding():
+    # Applies the current global limits (with padding) to the axes.
+    global global_min_x, global_max_x, global_min_y, global_max_y
+    if not limits_initialized:
+        return # Don't apply if not initialized
+
+    # Calculate range based on the *global* min/max data points seen so far
+    x_range = global_max_x - global_min_x
+    y_range = global_max_y - global_min_y
+
+    # Add a small absolute value or fraction of the coordinate if non-zero
+    min_abs_range = 1e9 # Minimum range to prevent excessive zoom on single points
+    if x_range < 1e-9:
+        x_range = max(abs(global_min_x) * 0.2, min_abs_range) if abs(global_min_x) > 1e-9 else min_abs_range
+    if y_range < 1e-9:
+        y_range = max(abs(global_min_y) * 0.2, min_abs_range) if abs(global_min_y) > 1e-9 else min_abs_range
+
+    # Calculate desired padded limits based on global range
+    target_xmin = global_min_x - x_range * padding
+    target_xmax = global_max_x + x_range * padding
+    target_ymin = global_min_y - y_range * padding
+    target_ymax = global_max_y + y_range * padding
+
+    # Set the limits on the axes using the calculated global targets
+    ax.set_xlim(target_xmin, target_xmax)
+    ax.set_ylim(target_ymin, target_ymax)
 
 def init():
+
+    global global_min_x, global_max_x, global_min_y, global_max_y, limits_initialized
+
     for patch in plot_elements:
         try:
             patch.remove()
         except ValueError:
             pass
     plot_elements.clear()
+
+    for line in trail_lines:
+        try: line.remove()
+        except ValueError: pass
+    trail_lines.clear()
+
+    trajectory_history.clear() # Clear history
 
     # --- Run simulation for the very first frame (t=0) ---
     sim.update(START_DAY * SECONDS_PER_DAY, logarithmic=False)
@@ -89,7 +148,7 @@ def init():
         c_y_init = center_obj.y
 
     # --- Create circle patches for t=0 and calculate initial limits ---
-    for body in bodies_to_plot:
+    for i, body in enumerate(bodies_to_plot):
         x_orig = body.x # Position at t=0
         y_orig = body.y # Position at t=0
         color = body.color
@@ -125,22 +184,41 @@ def init():
         ax.add_patch(circle)
         plot_elements.append(circle) # Store the circle object
 
+        # --- Initialize Trail ---
+        # Create history deque for this body (index i)
+        trajectory_history[i] = deque(maxlen=MAX_TRAIL_POINTS)
+        # Add the first point to the history
+        trajectory_history[i].append((plot_x, plot_y))
+        # Create the Line2D object for the trail (initially with one point or empty)
+        # Start with empty data, will be populated in animate
+        line, = ax.plot([], [], color=TRAIL_COLOR, linewidth=TRAIL_LINEWIDTH, alpha=TRAIL_ALPHA,
+                        zorder=z_order - 1)  # Trail behind body
+        trail_lines.append(line)  # Store the line object
+
     # --- Set initial axes limits for t=0 ---
     if np.isinf(min_x_init): min_x_init, max_x_init, min_y_init, max_y_init = -1e10, 1e10, -1e10, 1e10 # Fallback
-    x_range = max_x_init - min_x_init
-    y_range = max_y_init - min_y_init
+
+    global_min_x, global_max_x = min_x_init, max_x_init
+    global_min_y, global_max_y = min_y_init, max_y_init
+    limits_initialized = True
+
+    apply_global_limits_with_padding()
+
+    '''
     if x_range < 1e-9: x_range = abs(min_x_init) * 0.2 + 1e-9 if abs(min_x_init) > 1e-9 else 1e9
     if y_range < 1e-9: y_range = abs(min_y_init) * 0.2 + 1e-9 if abs(min_y_init) > 1e-9 else 1e9
     padding = 0.15
     ax.set_xlim(min_x_init - x_range * padding, max_x_init + x_range * padding)
     ax.set_ylim(min_y_init - y_range * padding, max_y_init + y_range * padding)
-
+    '''
     # Set initial title
     plot_title.set_text(f"Solar System at t = {START_DAY:.1f} days")
     return plot_elements + [plot_title]
 
 
 def animate(frame):
+    #For axes limits
+    global global_min_x, global_max_x, global_min_y, global_max_y
     # Calculate current simulation time based on frame number and step
     current_day = START_DAY + frame * DAYS_PER_FRAME
     current_time_seconds = current_day * SECONDS_PER_DAY
@@ -160,28 +238,44 @@ def animate(frame):
 
     # Get the updates positions and calculate new axes limits
     for i, body in enumerate(bodies_to_plot):
+        if i >= len(plot_elements):  # Safety check
+            print(
+                f"Warning: Mismatch between bodies_to_plot ({len(bodies_to_plot)}) and plot_elements ({len(plot_elements)}) at index {i}")
+            continue
         circle = plot_elements[i]  # Get the corresponding circle patch
+        line = trail_lines[i]
+
         x_orig = body.x
         y_orig = body.y
         display_radius = circle.get_radius()
 
-        if body.name == objects.Solar_system.center.name:
-            plot_x, plot_y = x_orig, y_orig
-        else:
-            # Shift calculation relative to center body's current position
+        plot_x, plot_y = x_orig, y_orig
+        if center_obj and body.name != center_obj.name:
             dx = x_orig - c_x_now
             dy = y_orig - c_y_now
-            distance_from_center = np.sqrt(dx ** 2 + dy ** 2)
-            if distance_from_center > 1e-9:
+            distance_from_center = np.sqrt(dx**2 + dy**2)
+            if distance_from_center > 1e-9 and c_display_radius > 1e-9:
                 ux = dx / distance_from_center
                 uy = dy / distance_from_center
                 plot_x = x_orig + ux * c_display_radius
                 plot_y = y_orig + uy * c_display_radius
-            else:
-                plot_x, plot_y = x_orig, y_orig
 
         # Update the circle's center position
         circle.set_center((plot_x, plot_y))
+
+        # --- Update Trail ---
+        # Append current *plotted* position to this body's history
+        trajectory_history[i].append((plot_x, plot_y))
+        # Extract history for plotting (handle case of < 2 points)
+        hist = list(trajectory_history[i])  # Convert deque to list for slicing/zipping
+        if len(hist) >= 2:
+            hist_x, hist_y = zip(*hist)
+            line.set_data(hist_x, hist_y)
+        elif len(hist) == 1:  # Only one point, plot nothing or a single point marker?
+            line.set_data([hist[0][0]], [hist[0][1]])  # Plot single point or...
+            # line.set_data([], []) # Plot nothing until 2 points exist
+        else:  # No history yet
+            line.set_data([], [])
 
         # Update limits based on new positions
         min_x = min(min_x, plot_x - display_radius)
@@ -190,6 +284,7 @@ def animate(frame):
         max_y = max(max_y, plot_y + display_radius)
 
         # Update dynamic limits with padding
+        '''
         if np.isinf(min_x): min_x, max_x, min_y, max_y = ax.get_xlim()[0], ax.get_xlim()[1], ax.get_ylim()[0], \
         ax.get_ylim()[1]  # Use previous if error
         x_range = max_x - min_x
@@ -200,6 +295,16 @@ def animate(frame):
         padding = 0.15
         ax.set_xlim(min_x - x_range * padding, max_x + x_range * padding)
         ax.set_ylim(min_y - y_range * padding, max_y + y_range * padding)
+        '''
+        if not np.isinf(min_x):  # Ensure we got valid numbers this frame
+            global_min_x = min(global_min_x, min_x)
+            global_max_x = max(global_max_x, max_x)
+            global_min_y = min(global_min_y, min_y)
+            global_max_y = max(global_max_y, max_y)
+
+        # --- Apply the potentially updated global limits with padding ---
+        # This ensures the axes only expand or stay the same, never shrink
+        apply_global_limits_with_padding()
 
         # Update the title
         plot_title.set_text(f"Solar System at t = {current_day:.1f} days")
