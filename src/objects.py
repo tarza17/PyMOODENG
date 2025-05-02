@@ -1,10 +1,12 @@
+from platform import system
+
 import constants
 import anomaly
 import numpy as np
 
 def current_radius(r_p, e, theta):
   """
-  Calculate current radius from percenter radius, eccentricity, and true anomaly.
+  Calculate current radius from perihelion radius, eccentricity, and true anomaly.
   """
   r = r_p*(1 + e) / (1 + e * np.cos(theta))
   return r
@@ -44,14 +46,26 @@ class Body:
           self.x = 0.0  # Initial x-coordinate
         self.y = 0.0  # Initial y-coordinate
 
-  def update(self, t, c_x = 0.0 , c_y = 0.0):
+  def update(self, t, c_x = 0.0 , c_y = 0.0, logarithmic = False, depth = 1):
+        # Check if orbit exists before trying to use it
+        if self.orbit is None:
+             self.x = c_x
+             self.y = c_y
+             return
+
         mean_anomaly = t * 2 * np.pi / self.orbit.tp # Mean anomaly is always 0 at t=0 (-> no addition of it here)
         true_anomaly = anomaly.Anomaly(mean_anomaly, type = 'M').theta(self.orbit.e)
         r = current_radius(self.orbit.peri_r,self.orbit.e, true_anomaly)
+        if logarithmic:
+            r = np.log10(r) / depth
+
         self.x = r * np.cos(true_anomaly) # Local x coordinate
         self.x = self.x + c_x # Global x coordinate
         self.y = r * np.sin(true_anomaly)    # Local y coordinate
         self.y = self.y + c_y # Global y coordinate
+
+  def get_bodies(self):
+        return [self]
 
 class System:
     def __init__(self, center, orbiting=None):
@@ -63,7 +77,19 @@ class System:
             bodies (list of Body, optional): List of bodies orbiting the center. Defaults to None.
         """
         self.center = center
-        self.orbiting_objects = orbiting if orbiting is not None else []
+        # self.orbiting_objects = orbiting if orbiting is not None else []
+        if orbiting is not None:
+            if isinstance(orbiting, (System, Body)):
+                self.orbiting_objects= [orbiting]
+            if isinstance(orbiting, (list, tuple)) and all(isinstance(item, (System, Body)) for item in orbiting):
+                self.orbiting_objects = orbiting
+        else:
+            self.orbiting_objects = []
+
+#        self.all_bodies = [center]
+
+        # for body in self.orbiting_objects:
+        #     self.all_bodies.append(body.get_bodies())
 
     def add_body_or_system(self, body):
         self.orbiting_objects.append(body)
@@ -77,15 +103,57 @@ class System:
     def set_center_pos(self, coords):
         self.center.x = coords[0]
         self.center.y = coords[1]
-
-    def update(self, t, c_x, c_y):
+    '''
+    def update(self, t, c_x, c_y, logarithmic = False, depth = 0):
         if self.center.orbit:
-          self.center.update(t, c_x, c_y)
+          self.center.update(t, c_x, c_y, logarithmic)
         else:
           self.center.x = c_x
           self.center.y = c_y
+        depth = depth + 1
         for obj in self.orbiting_objects:
-          obj.update(t, self.center.x, self.center.y)
+          obj.update(t, self.center.x, self.center.y, logarithmic, depth)
+    '''
+
+    def update(self, t, c_x, c_y, logarithmic=False, depth=0):
+        # --- MODIFIED LOGIC for positioning the center ---
+        # Case 1: This system is a TOP-LEVEL system called by Universe (c_x, c_y are 0,0)
+        #         AND its center has an orbit defined (e.g., Earth in EarthMoon sim).
+        #         Force the center to stay at (0,0) for this context.
+        if depth == 0 and self.center.orbit:
+            self.center.x = 0.0
+            self.center.y = 0.0
+            # Do NOT call self.center.update() in this specific case.
+
+        # Case 2: The center body has an orbit defined AND it's NOT the specific case above
+        #         (i.e., this system is orbiting an outer center where c_x, c_y != 0,0).
+        #         Update the center's position based on its orbit relative to c_x, c_y.
+        elif self.center.orbit:
+            # Update center relative to the outer center c_x, c_y
+            # NOTE: Pass depth to Body.update if it uses it (it doesn't currently, but good practice)
+            self.center.update(t, c_x, c_y, logarithmic, depth)
+
+        # Case 3: The center body has NO orbit defined.
+        #         Place it exactly at the reference point c_x, c_y.
+        else:
+            self.center.x = c_x
+            self.center.y = c_y
+        # --- END MODIFIED LOGIC ---
+
+        # Now update all orbiting objects relative to the *final* position of the center
+        orbiting_center_x = self.center.x
+        orbiting_center_y = self.center.y
+        depth = depth + 1  # Increment depth for subsystems
+        for obj in self.orbiting_objects:
+            # Pass the calculated center position and incremented depth
+            obj.update(t, orbiting_center_x, orbiting_center_y, logarithmic, depth)
+
+    def get_bodies(self):
+       # return [self.center].append(self.orbiting_objects)
+       bodies = [self.center]
+       for obj in self.orbiting_objects:
+           bodies.extend(obj.get_bodies())
+       return bodies
 
 class Universe:
     def __init__(self, systems=None):
@@ -95,13 +163,28 @@ class Universe:
         Args:
             systems : List of systems in the simulation.
         """
-        if systems is None:
-            systems = []
-        self.all_elements = systems
 
-    def update(self, time):
+        # if systems is None:
+        #     systems = []
+        if systems is not None:
+            if isinstance(systems, (System, Body)):
+                systems = [systems]
+            if isinstance(systems, (list, tuple)) and all(isinstance(item, (System, Body)) for item in systems):
+                systems = systems
+        else:
+            systems = []
+
+        self.all_elements = systems
+        self.all_bodies = []
         for elem in self.all_elements:
-          elem.update(time, 0.0, 0.0)
+            self.all_bodies.extend(elem.get_bodies())
+
+    def update(self, time, logarithmic = False):
+        for elem in self.all_elements:
+          elem.update(time, 0.0, 0.0, logarithmic)
+
+    def get_bodies(self):
+        return self.all_bodies
 
 Sun = Body(
     name = "Sun",
@@ -195,14 +278,42 @@ Eris = Body(
     orbit=Orbit(constants.Eris_perihelion, constants.Eris_T, constants.Eris_e)
 )
 
+Moon2 = Body(
+    name = "Moon",
+    color = "grey",
+    mass = constants.Moon_m,
+    mean_diameter = constants.Moon_rm,
+    orbit = Orbit(constants.Moon_perihelion * 150, constants.Moon_T *2, constants.Moon_e * 0.2))
+
+Moon3 = Body(
+    name = "Moon",
+    color = "grey",
+    mass = constants.Moon_m,
+    mean_diameter = constants.Moon_rm * 0.6,
+    orbit = Orbit(constants.Moon_perihelion * 50, constants.Moon_T, constants.Moon_e))
+
+EarthMoon = System(center = Earth, orbiting = Moon)
+
+SunEarthMoon = System(center = Sun, orbiting = EarthMoon)
+
 Solar_system = System(center = Sun, orbiting = [
     Mercury,
     Venus,
-    Earth,
+    EarthMoon,
     Mars,
     Jupiter,
     Saturn,
     Uranus,
     Neptune,
     Pluto,
-    Eris])
+    Eris
+])
+
+Solar_system0 = System(center = Sun, orbiting = [
+    Mercury,
+    Venus,
+    EarthMoon,
+    Mars,
+])
+
+Dwarfs = System(center = Sun, orbiting = [Pluto, Eris])

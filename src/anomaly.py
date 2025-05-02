@@ -106,10 +106,11 @@ class Anomaly:
 
 #Anomaly calcs
 
+'''
 def eccentric_anomaly_from_mean(e, M, tolerance=1e-10):
-    '''
+
     Calc eccenetric anomaly from mean anomaly
-    '''
+
     Mnorm = np.fmod(M, 2 * np.pi)
     E0 = M + (-1 / 2 * e**3 + e + (e**2 + 3 / 2 * np.cos(M) * e ** 3) * np.cos(M)) * np.sin(M)
     dE = tolerance + 1
@@ -127,8 +128,42 @@ def eccentric_anomaly_from_mean(e, M, tolerance=1e-10):
         count += 1
         if count == MAX_ITER:
             raise ConvergenceError('Did not converge after {n} iterations. (e={e!r}, M={M!r})'.format(n=MAX_ITER, e=e, M=M))
-    return E
+        return E
+'''
 
+def eccentric_anomaly_from_mean(e, M, tolerance=1e-8):  # Using relaxed tolerance too
+    '''
+    Calc eccenetric anomaly from mean anomaly using Newton-Raphson.
+    '''
+    Mnorm = np.fmod(M, 2 * np.pi)
+
+    # Initial guess (Mnorm is usually good for Newton-Raphson)
+    E0 = Mnorm
+    # Optional refinement for high eccentricity, but Mnorm often suffices
+    # if e > 0.8:
+    # E0 = np.pi
+
+    dE = tolerance + 1
+    count = 0
+    E = E0  # Start with E = E0
+
+
+    while dE > tolerance:
+        # Newton-Raphson step: E_new = E - f(E) / f'(E)
+        # f(E) = E - e * sin(E) - Mnorm
+        # f'(E) = 1 - e * cos(E)
+        E_new = E - (E - e * np.sin(E) - Mnorm) / (1.0 - e * np.cos(E))
+
+        dE = abs(E_new - E)
+        E = E_new  # Update E for the next iteration
+        count += 1
+
+        if count == MAX_ITER:
+            raise ConvergenceError(
+                f'Newton-Raphson did not converge after {MAX_ITER} iterations. '
+                f'(e={e!r}, M={Mnorm!r}, E={E!r}, dE={dE!r})'  # More info
+            )
+    return E
 
 def eccentric_anomaly_from_true(e, theta):
     '''
@@ -160,7 +195,8 @@ def true_anomaly_from_eccentric(e, E):
     '''
     Calc true anomaly from eccenetric anomaly
     '''
-    theta = np.atan2(np.sqrt(1 - e**2) * np.sin(E), np.cos(E) + e)
+    #theta = np.atan2(np.sqrt(1 - e**2) * np.sin(E), np.cos(E) + e)
+    theta = np.arctan2(np.sqrt(1 - e ** 2) * np.sin(E), np.cos(E) + e) #Z
     theta = np.mod(theta, 2 * np.pi)
     return theta
 
