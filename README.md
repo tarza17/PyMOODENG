@@ -1,5 +1,4 @@
 # PyMOODENG
-SciPy szupi projekt
 
 # Introduction
 ======================================================
