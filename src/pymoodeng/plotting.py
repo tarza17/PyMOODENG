@@ -1,15 +1,32 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.animation as animation
+from matplotlib.widgets import Slider, Button, RadioButtons
 import matplotlib
+import inspect
+from .objects import System
 from . import objects
 from collections import deque
 
 matplotlib.use("TkAgg")
 
+def get_system_instances():
+    # Getting all members from the objects module
+    all_members = inspect.getmembers(objects)
+    # Filtering for instances of System
+    system_instances = [member for name, member in all_members if isinstance(member, System)]
+
+    return system_instances
+
+available_systems = get_system_instances()
+system_names = [sys.name for sys in available_systems]
+
+
 # Creating the universe containing the desired system(s)
 sim = objects.Universe([objects.Solar_system])
+selected_system = objects.Solar_system
 
 # Interaction State
 user_interacting = False
@@ -20,13 +37,14 @@ SECONDS_PER_DAY = 24 * 3600
 START_DAY = 0
 END_DAY = 365*300
 
-# How many simulation days pass per animation frame
-DAYS_PER_FRAME = 1
-
-# Animation speed control (milliseconds between frames)
+# Animation speed control parameters
+PAUSE = False
 INTERVAL_MS = 20
+DAYS_PER_FRAME = 1
+CURRENT_FRAME = 0
 
 # Orbital Trail Settings
+TRAIL_VISIBLE = True
 MAX_TRAIL_POINTS = None
 TRAIL_COLOR = 'white'
 TRAIL_LINEWIDTH = 0.5
@@ -34,6 +52,7 @@ TRAIL_ALPHA = 0.7
 
 # Plotting setup
 fig, ax = plt.subplots(figsize=(15,15))
+NAMES_VISIBLE = False
 
 # Background color (both figure and axes)
 fig.set_facecolor('black')
@@ -46,7 +65,6 @@ ax.set_aspect('equal', adjustable='box')
 ax.set_xlabel("X (m)", color="white")
 ax.set_ylabel("Y (m)", color="white")
 plot_title = ax.set_title("", color="white")
-#ax.grid(True, linestyle='--', alpha=0.6)
 
 # Adjust tick parameters
 ax.tick_params(axis='x', colors='white')
@@ -58,17 +76,22 @@ ax.spines['top'].set_color('white')
 ax.spines['left'].set_color('white')
 ax.spines['right'].set_color('white')
 
-# Scaling factor for body sizes
-scale = 5000
+# Scaling factors for center body and other body sizes
+c_scale = 1
+scale = 1
+
 
 # Global list to hold plot elements
 plot_elements = []
 trail_lines = []
 trajectory_history = {}
-# Store calculated positions/radii per frame for limit calculations if needed
 plot_positions_this_frame = []
 
 bodies_to_plot = sim.get_bodies()
+
+# Create radio buttons for system selection
+ax_systems = plt.axes([0.8, 0.3, 0.15, 0.15])  # Position for the system selector
+radio_systems = RadioButtons(ax_systems, system_names)
 
 # Variables for sticky axes
 global_min_x, global_max_x = np.inf, -np.inf
@@ -89,10 +112,60 @@ if sim.all_elements and isinstance(sim.all_elements[0], objects.System):
 
 if center_obj:
     # Calculate the radius the center body will be displayed with
-    c_display_radius = (center_obj.mean_diameter / 2.0) * scale
+    c_display_radius = (center_obj.mean_diameter / 2.0) * c_scale
     # We'll get its actual position during the t=0 update in init(), this is just needed for shifting
 else:
     print("Warning: Center body for shifting not definitively identified. Shifting might be inconsistent.")
+
+# Callback functions for sliders
+def update_c_scale(val):
+    global c_scale
+    c_scale = val
+    slider_c_scale.label.set_text(f'Center Body Scale  ({c_scale:.2f}): ')  # Update label text
+
+    # Clear trail lines and history
+    for line in trail_lines:
+        line.set_data([], [])  # Clear the line data
+    for i in range(len(trajectory_history)):
+        trajectory_history[i].clear()  # Clear the history for each body
+
+def update_scale(val):
+    global scale
+    scale = val
+    slider_scale.label.set_text(f'Orbiting Bodies Scale ({scale:.2f}): ')  # Update label text
+
+
+# Callback functions for buttons
+def toggle_trail(event):
+    global TRAIL_VISIBLE
+    TRAIL_VISIBLE = not TRAIL_VISIBLE
+
+def toggle_names(event):
+    global NAMES_VISIBLE
+    NAMES_VISIBLE = not NAMES_VISIBLE
+
+
+# Create sliders
+ax_c_scale = plt.axes([0.8, 0.14, 0.15, 0.03])  # Position for c_scale slider
+slider_c_scale = Slider(ax_c_scale, ' ', 1, 10000.0, valinit=c_scale, color="white")
+slider_c_scale.label.set_color('white')
+slider_c_scale.label.set_text(f'Center Body Scale  ({c_scale:.2f}): ')
+slider_c_scale.on_changed(update_c_scale)
+
+ax_scale = plt.axes([0.8, 0.1, 0.15, 0.03])  # Position for scale slider
+slider_scale = Slider(ax_scale, ' ', 1, 10000.0, valinit=scale, color="white")
+slider_scale.label.set_color('white')
+slider_scale.label.set_text(f'Orbiting Bodies Scale ({scale:.2f}): ')
+slider_scale.on_changed(update_scale)
+
+# Create buttons
+ax_toggle_trail = plt.axes([0.8, 0.199, 0.15, 0.04])  # Position for toggle trail button
+button_trail = Button(ax_toggle_trail, 'Trails Visibility')
+button_trail.on_clicked(toggle_trail)
+
+ax_toggle_names = plt.axes([0.8, 0.249, 0.15, 0.04])  # Position for toggle names button
+button_names = Button(ax_toggle_names, 'Names Visibility')
+button_names.on_clicked(toggle_names)
 
 def apply_global_limits_with_padding():
     """
@@ -104,6 +177,7 @@ def apply_global_limits_with_padding():
     and maximum positions observed so far, applying a padding factor to prevent 
     excessive zooming or clipping.
     """
+    # Applies the current global limits (with padding) to the axes.
     global global_min_x, global_max_x, global_min_y, global_max_y
     if not limits_initialized:
         return # Don't apply if not initialized
@@ -132,14 +206,7 @@ def apply_global_limits_with_padding():
 # Event Handlers
 
 def on_scroll(event):
-    """
-    Event handler for mouse scroll events, which are used to zoom in or out on the plot.
-    The zoom is applied based on the current mouse position, allowing for smooth interaction.
-
-    Args:
-        event (matplotlib.backend_bases.MouseEvent): The event object containing 
-                                                   information about the scroll action.
-    """
+    """Handle mouse scroll for zooming."""
     global user_interacting
     if event.inaxes != ax: return
 
@@ -168,14 +235,7 @@ def on_scroll(event):
     ax.figure.canvas.draw_idle() # Request redraw
 
 def on_press(event):
-    """
-    Event handler for mouse button press events. Used for initiating the panning process 
-    when the user clicks on the plot.
-
-    Args:
-        event (matplotlib.backend_bases.MouseEvent): The event object containing 
-                                                   information about the mouse button press.
-    """
+    """Handle mouse button press for panning."""
     global user_interacting, pan_info
     if event.inaxes != ax: return
     # Use middle mouse button for panning (button 2), or left (button 1) if preferred
@@ -189,14 +249,7 @@ def on_press(event):
     pan_info['current_ylim'] = ax.get_ylim()
 
 def on_motion(event):
-    """
-    Event handler for mouse motion events while a mouse button is pressed. 
-    This function allows the user to pan the plot by dragging the mouse.
-
-    Args:
-        event (matplotlib.backend_bases.MouseEvent): The event object containing 
-                                                   information about the mouse movement.
-    """
+    """Handle mouse motion while button is pressed for panning."""
     global pan_info
     if event.inaxes != ax or pan_info['button'] != event.button: return
     if pan_info['start_x'] is None or event.xdata is None: return # Avoid errors if mouse leaves axes
@@ -212,30 +265,15 @@ def on_motion(event):
     ax.figure.canvas.draw_idle() # Request redraw
 
 def on_release(event):
-    """
-    Event handler for mouse button release events. This function stops the panning process 
-    when the user releases the mouse button.
-
-    Args:
-        event (matplotlib.backend_bases.MouseEvent): The event object containing 
-                                                   information about the mouse button release.
-    """
+    """Handle mouse button release to stop panning."""
     global pan_info
     if event.button == pan_info['button']:
         pan_info = {'button': None, 'start_x': None, 'start_y': None, 'current_xlim': None, 'current_ylim': None}
 
 def on_key(event):
-    """
-    Event handler for key press events. This function listens for specific keys 
-    (e.g., 'r') to reset the plot view or trigger other interactions.
-
-    Args:
-        event (matplotlib.backend_bases.KeyEvent): The event object containing 
-                                                  information about the key press.
-    """
-    global user_interacting, global_min_x, global_max_x, global_min_y, global_max_y
+    """Handle key press events, e.g., reset view."""
+    global user_interacting, global_min_x, global_max_x, global_min_y, global_max_y, PAUSE, c_scale
     if event.key == 'r': # 'r' for reset
-        print("Resetting view and re-enabling auto-limits.")
         user_interacting = False
         # Recalculate limits based on *current* positions to avoid jumping
         # This requires getting current positions, similar to animate()
@@ -244,9 +282,9 @@ def on_key(event):
 
         # Need current center position if shifting is enabled
         c_x_now, c_y_now = (0.0, 0.0)
+        c_display_radius = (center_obj.mean_diameter / 2.0) * c_scale
+
         if center_obj:
-            # Note: sim state might be slightly ahead/behind if animation is running fast
-            # but it's usually close enough for a reset view.
             c_x_now = center_obj.x
             c_y_now = center_obj.y
 
@@ -283,6 +321,12 @@ def on_key(event):
         else:
             print("Warning: Could not determine current limits for reset.")
 
+    if event.key == ' ':
+        PAUSE = not PAUSE
+        if PAUSE:
+            ani.event_source.stop()
+        else:
+            ani.event_source.start()
 
 def init():
     """
@@ -295,7 +339,9 @@ def init():
         list: A list of plot elements (circles, trails, title) that are created for the 
               first frame of the simulation.
     """
-    global global_min_x, global_max_x, global_min_y, global_max_y, limits_initialized, user_interacting
+    global global_min_x, global_max_x, global_min_y, global_max_y, limits_initialized, user_interacting, c_scale, bodies_to_plot
+
+    bodies_to_plot = sim.get_bodies()
 
     user_interacting = False
 
@@ -325,6 +371,7 @@ def init():
     if center_obj:
         c_x_init = center_obj.x
         c_y_init = center_obj.y
+        c_display_radius = (center_obj.mean_diameter / 2.0) * c_scale
 
     # --- Create circle patches for t=0 and calculate initial limits ---
     for i, body in enumerate(bodies_to_plot):
@@ -379,17 +426,15 @@ def init():
 
     apply_global_limits_with_padding()
 
-    
-
-    
-    #if x_range < 1e-9: x_range = abs(min_x_init) * 0.2 + 1e-9 if abs(min_x_init) > 1e-9 else 1e9
-    #if y_range < 1e-9: y_range = abs(min_y_init) * 0.2 + 1e-9 if abs(min_y_init) > 1e-9 else 1e9
-    #padding = 0.15
-    #ax.set_xlim(min_x_init - x_range * padding, max_x_init + x_range * padding)
-    #ax.set_ylim(min_y_init - y_range * padding, max_y_init + y_range * padding)
-
+    '''
+    if x_range < 1e-9: x_range = abs(min_x_init) * 0.2 + 1e-9 if abs(min_x_init) > 1e-9 else 1e9
+    if y_range < 1e-9: y_range = abs(min_y_init) * 0.2 + 1e-9 if abs(min_y_init) > 1e-9 else 1e9
+    padding = 0.15
+    ax.set_xlim(min_x_init - x_range * padding, max_x_init + x_range * padding)
+    ax.set_ylim(min_y_init - y_range * padding, max_y_init + y_range * padding)
+    '''
     # Set initial title
-    plot_title.set_text(f"Solar System at t = {START_DAY:.1f} days ({START_DAY/365.2425:.2f} years)")
+    plot_title.set_text(f"{selected_system.name} centric system at t = {START_DAY:.1f} days ({START_DAY/365.2425:.2f} years)")
     return plot_elements + trail_lines + [plot_title]
 
 
@@ -408,10 +453,10 @@ def animate(frame):
         list: A list of plot elements (circles, trails, title) that are updated for the 
               current frame of the simulation.
     """
+    global CURRENT_FRAME, global_min_x, global_max_x, global_min_y, global_max_y, plot_positions_this_frame, scale, c_scale, NAMES_VISIBLE, DAYS_PER_FRAME
 
-    #For axes limits
-    global global_min_x, global_max_x, global_min_y, global_max_y, plot_positions_this_frame
-
+    # Update the frame counter
+    CURRENT_FRAME = frame
     # Calculate current simulation time based on frame number and step
     current_day = START_DAY + frame * DAYS_PER_FRAME
     current_time_seconds = current_day * SECONDS_PER_DAY
@@ -424,6 +469,7 @@ def animate(frame):
     if center_obj:
         c_x_now = center_obj.x
         c_y_now = center_obj.y
+        c_display_radius = (center_obj.mean_diameter / 2.0) * c_scale
 
     # Clear previous frame's positions
     plot_positions_this_frame.clear()
@@ -439,7 +485,11 @@ def animate(frame):
 
         x_orig = body.x
         y_orig = body.y
-        display_radius = circle.get_radius()
+
+        if body.name == center_obj.name:
+            display_radius = (body.mean_diameter / 2.0) * c_scale  # Center body
+        else:
+            display_radius = (body.mean_diameter / 2.0) * scale  # Orbiting bodies
 
         plot_x, plot_y = x_orig, y_orig
         if center_obj and body.name != center_obj.name:
@@ -454,6 +504,7 @@ def animate(frame):
 
         # Update the circle's center position
         circle.set_center((plot_x, plot_y))
+        circle.set_radius(display_radius)
         plot_positions_this_frame.append((plot_x, plot_y, display_radius)) # Store for limits/reset
 
         # --- Update Trail ---
@@ -464,13 +515,42 @@ def animate(frame):
         if len(hist) >= 2:
             hist_x, hist_y = zip(*hist)
             line.set_data(hist_x, hist_y)
-        elif len(hist) == 1:  # Only one point, plot nothing or a single point marker?
-            line.set_data([hist[0][0]], [hist[0][1]])  # Plot single point or...
-            # line.set_data([], []) # Plot nothing until 2 points exist
+        elif len(hist) == 1:  # Only one point
+            line.set_data([hist[0][0]], [hist[0][1]])  # Plot single point
         else:  # No history yet
             line.set_data([], [])
 
-        # --- Handle Axes Limits ---
+        # Update trail visibility
+        if TRAIL_VISIBLE:
+            line.set_visible(True)
+        else:
+            line.set_visible(False)
+
+        # Update Names
+        if NAMES_VISIBLE:
+            # Check if the body is within axes limits
+            if ax.get_xlim()[0] <= plot_x <= ax.get_xlim()[1] and ax.get_ylim()[0] <= plot_y <= ax.get_ylim()[1]:
+                # Create or update the text label for the body
+                if not hasattr(circle, 'name_text'):
+                    # Create a new text object if it doesn't exist
+                    circle.name_text = ax.text(plot_x, plot_y, body.name, color='white', fontsize=8, ha='center',
+                                               va='bottom', zorder=30)
+                else:
+                    # Update the position of the existing text object
+                    circle.name_text.set_position((plot_x, plot_y + display_radius))
+                    circle.name_text.set_text(body.name)  # Update the name text
+            else:
+                # If names are not visible, remove any existing text
+                if hasattr(circle, 'name_text'):
+                    circle.name_text.remove()
+                    del circle.name_text
+        else:
+            # If names are not visible, remove any existing text
+            if hasattr(circle, 'name_text'):
+                circle.name_text.remove()
+                del circle.name_text
+
+        # Handle Axes Limits
     if not user_interacting:
             # Calculate frame limits ONLY if not user interacting
         frame_min_x, frame_max_x = np.inf, -np.inf
@@ -506,10 +586,72 @@ def animate(frame):
         apply_global_limits_with_padding()
 
     # Update the title
-    plot_title.set_text(f"Solar System at t = {current_day:.1f} days ({current_day/365.2425:.2f} years)")
+    plot_title.set_text(f"{selected_system.name} at t = {current_day:.1f} days ({current_day/365.2425:.2f} years)")
 
         # Return iterable of plot elements that have been updated
     return plot_elements + trail_lines + [plot_title]
+
+# Callback function for changing systems
+def switch_system(label):
+    global sim, bodies_to_plot, plot_elements, trail_lines, trajectory_history, center_obj, selected_system, CURRENT_FRAME
+
+    # Reset the frame counter
+    CURRENT_FRAME = 0
+
+    # Find the selected system by name
+    selected_system = available_systems[system_names.index(label)]
+    sim = objects.Universe([selected_system])  # Update the simulation with the new system
+
+    # Clear all existing name texts from the axes
+    for text in ax.texts:
+        try:
+            text.remove()
+        except:
+            pass
+
+    # Reset plot elements and trajectory history
+    for patch in plot_elements:
+        try:
+            # Remove any name text attached to the patch
+            if hasattr(patch, 'name_text'):
+                try:
+                    patch.name_text.remove()
+                except:
+                    pass
+            patch.remove()
+        except ValueError:
+            pass
+    plot_elements.clear()
+
+    for line in trail_lines:
+        try:
+            line.remove()
+        except ValueError:
+            pass
+    trail_lines.clear()
+
+    trajectory_history.clear()
+
+    # Update bodies to plot based on the new system
+    bodies_to_plot = sim.get_bodies()
+
+    # Update center object for the new system
+    if sim.all_elements and isinstance(sim.all_elements[0], objects.System):
+        center_obj_candidate = sim.all_elements[0].center
+        center_obj = next((b for b in bodies_to_plot if b.name == center_obj_candidate.name), None)
+    else:
+        center_obj = None
+
+    # Reinitialize the simulation
+    init()  # Call the init function to set up the new system
+
+    # Restart the animation from frame 0
+    ani.frame_seq = ani.new_frame_seq()
+    print(f"Switched to system: {label}")
+
+
+# Connect the radio button to the callback function
+radio_systems.on_clicked(switch_system)
 
 # Connect Event Handlers
 fig.canvas.mpl_connect('scroll_event', on_scroll)
@@ -527,7 +669,8 @@ print(f"Starting animation: {num_frames} frames, {DAYS_PER_FRAME} day(s) per fra
 print("\n--- Interactive Controls ---")
 print("Mouse Wheel: Zoom in/out")
 print("Left Mouse Button + Drag: Pan")
-print("Press 'r': Reset view and re-enable auto-scaling")
+print("Press 'space': Pause/Unpause animation")
+print("Press 'r': Reset view")
 print("--------------------------\n")
 # Create the animation object
 ani = animation.FuncAnimation(fig, animate, frames=num_frames,
@@ -538,6 +681,3 @@ ani = animation.FuncAnimation(fig, animate, frames=num_frames,
 plt.show()
 
 print("Animation finished or window closed.")
-
-#ani.save('solar_system_animation.mp4', fps=1000/INTERVAL_MS, dpi=150)
-#print("Animation saved.")
