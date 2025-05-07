@@ -68,7 +68,7 @@ class Body:
         return [self]
 
 class System:
-    def __init__(self, center, orbiting=None):
+    def __init__(self, name, center, orbiting=None):
         """
         Initializes an orbital System.
 
@@ -76,6 +76,7 @@ class System:
             center (Body): The central body of the system.
             bodies (list of Body, optional): List of bodies orbiting the center. Defaults to None.
         """
+        self.name = name
         self.center = center
         # self.orbiting_objects = orbiting if orbiting is not None else []
         if orbiting is not None:
@@ -292,11 +293,11 @@ Moon3 = Body(
     mean_diameter = constants.Moon_rm * 0.6,
     orbit = Orbit(constants.Moon_perihelion * 50, constants.Moon_T, constants.Moon_e))
 
-EarthMoon = System(center = Earth, orbiting = Moon)
+EarthMoon = System(name = "EarthMoon", center = Earth, orbiting = Moon)
 
-SunEarthMoon = System(center = Sun, orbiting = EarthMoon)
+SunEarthMoon = System(name="SunEarthMoon", center = Sun, orbiting = EarthMoon)
 
-Solar_system = System(center = Sun, orbiting = [
+Solar_system = System(name="Solar_system", center = Sun, orbiting = [
     Mercury,
     Venus,
     EarthMoon,
@@ -309,11 +310,11 @@ Solar_system = System(center = Sun, orbiting = [
     Eris
 ])
 
-Solar_system0 = System(center = Sun, orbiting = [
+Solar_system0 = System(name="Solar_system0", center = Sun, orbiting = [
     Mercury,
     Venus,
     EarthMoon,
     Mars,
 ])
 
-Dwarfs = System(center = Sun, orbiting = [Pluto, Eris])
+Dwarfs = System(name="Dwarfs", center = Sun, orbiting = [Pluto, Eris])
