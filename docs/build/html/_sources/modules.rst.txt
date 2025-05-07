@@ -1,13 +1,8 @@
-PyMOODENG
-=========
+Modules
+=======
 
+.. autosummary::
+   :toctree: generated
+   :recursive:
 
-
-.. toctree::
-   :maxdepth: 4
-
-.. toctree::
-   :maxdepth: 2
-   :caption: API Documentation
-
-   modules
+   pymoodeng
