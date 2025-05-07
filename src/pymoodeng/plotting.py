@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.animation as animation
 import matplotlib
-import objects
+from . import objects
 from collections import deque
 
 matplotlib.use("TkAgg")
@@ -95,7 +95,15 @@ else:
     print("Warning: Center body for shifting not definitively identified. Shifting might be inconsistent.")
 
 def apply_global_limits_with_padding():
-    # Applies the current global limits (with padding) to the axes.
+    """
+    Applies the current global limits (with padding) to the axes of the plot. 
+    This ensures that the plotted area accommodates all bodies within the system, 
+    including a small buffer zone around the plot limits for better visualization.
+
+    The function adjusts the x and y limits of the plot based on the minimum 
+    and maximum positions observed so far, applying a padding factor to prevent 
+    excessive zooming or clipping.
+    """
     global global_min_x, global_max_x, global_min_y, global_max_y
     if not limits_initialized:
         return # Don't apply if not initialized
@@ -124,7 +132,14 @@ def apply_global_limits_with_padding():
 # Event Handlers
 
 def on_scroll(event):
-    """Handle mouse scroll for zooming."""
+    """
+    Event handler for mouse scroll events, which are used to zoom in or out on the plot.
+    The zoom is applied based on the current mouse position, allowing for smooth interaction.
+
+    Args:
+        event (matplotlib.backend_bases.MouseEvent): The event object containing 
+                                                   information about the scroll action.
+    """
     global user_interacting
     if event.inaxes != ax: return
 
@@ -153,7 +168,14 @@ def on_scroll(event):
     ax.figure.canvas.draw_idle() # Request redraw
 
 def on_press(event):
-    """Handle mouse button press for panning."""
+    """
+    Event handler for mouse button press events. Used for initiating the panning process 
+    when the user clicks on the plot.
+
+    Args:
+        event (matplotlib.backend_bases.MouseEvent): The event object containing 
+                                                   information about the mouse button press.
+    """
     global user_interacting, pan_info
     if event.inaxes != ax: return
     # Use middle mouse button for panning (button 2), or left (button 1) if preferred
@@ -167,7 +189,14 @@ def on_press(event):
     pan_info['current_ylim'] = ax.get_ylim()
 
 def on_motion(event):
-    """Handle mouse motion while button is pressed for panning."""
+    """
+    Event handler for mouse motion events while a mouse button is pressed. 
+    This function allows the user to pan the plot by dragging the mouse.
+
+    Args:
+        event (matplotlib.backend_bases.MouseEvent): The event object containing 
+                                                   information about the mouse movement.
+    """
     global pan_info
     if event.inaxes != ax or pan_info['button'] != event.button: return
     if pan_info['start_x'] is None or event.xdata is None: return # Avoid errors if mouse leaves axes
@@ -183,13 +212,27 @@ def on_motion(event):
     ax.figure.canvas.draw_idle() # Request redraw
 
 def on_release(event):
-    """Handle mouse button release to stop panning."""
+    """
+    Event handler for mouse button release events. This function stops the panning process 
+    when the user releases the mouse button.
+
+    Args:
+        event (matplotlib.backend_bases.MouseEvent): The event object containing 
+                                                   information about the mouse button release.
+    """
     global pan_info
     if event.button == pan_info['button']:
         pan_info = {'button': None, 'start_x': None, 'start_y': None, 'current_xlim': None, 'current_ylim': None}
 
 def on_key(event):
-    """Handle key press events, e.g., reset view."""
+    """
+    Event handler for key press events. This function listens for specific keys 
+    (e.g., 'r') to reset the plot view or trigger other interactions.
+
+    Args:
+        event (matplotlib.backend_bases.KeyEvent): The event object containing 
+                                                  information about the key press.
+    """
     global user_interacting, global_min_x, global_max_x, global_min_y, global_max_y
     if event.key == 'r': # 'r' for reset
         print("Resetting view and re-enabling auto-limits.")
@@ -242,7 +285,16 @@ def on_key(event):
 
 
 def init():
+    """
+    Initializes the plot and simulation state at the start of the animation. 
+    This function prepares the plot by creating the bodies and setting up their 
+    initial positions and sizes. It also sets the initial axes limits and prepares 
+    the system for the first frame of the animation.
 
+    Returns:
+        list: A list of plot elements (circles, trails, title) that are created for the 
+              first frame of the simulation.
+    """
     global global_min_x, global_max_x, global_min_y, global_max_y, limits_initialized, user_interacting
 
     user_interacting = False
@@ -327,19 +379,36 @@ def init():
 
     apply_global_limits_with_padding()
 
-    '''
-    if x_range < 1e-9: x_range = abs(min_x_init) * 0.2 + 1e-9 if abs(min_x_init) > 1e-9 else 1e9
-    if y_range < 1e-9: y_range = abs(min_y_init) * 0.2 + 1e-9 if abs(min_y_init) > 1e-9 else 1e9
-    padding = 0.15
-    ax.set_xlim(min_x_init - x_range * padding, max_x_init + x_range * padding)
-    ax.set_ylim(min_y_init - y_range * padding, max_y_init + y_range * padding)
-    '''
+    
+
+    
+    #if x_range < 1e-9: x_range = abs(min_x_init) * 0.2 + 1e-9 if abs(min_x_init) > 1e-9 else 1e9
+    #if y_range < 1e-9: y_range = abs(min_y_init) * 0.2 + 1e-9 if abs(min_y_init) > 1e-9 else 1e9
+    #padding = 0.15
+    #ax.set_xlim(min_x_init - x_range * padding, max_x_init + x_range * padding)
+    #ax.set_ylim(min_y_init - y_range * padding, max_y_init + y_range * padding)
+
     # Set initial title
     plot_title.set_text(f"Solar System at t = {START_DAY:.1f} days ({START_DAY/365.2425:.2f} years)")
     return plot_elements + trail_lines + [plot_title]
 
 
 def animate(frame):
+    """
+    Updates the plot for each frame of the animation. The function recalculates the 
+    positions of the bodies in the system based on the current simulation time and updates 
+    the plot elements (bodies and trails) accordingly. The axes limits are also adjusted 
+    dynamically based on the bodies' positions to ensure they stay within view.
+
+    Args:
+        frame (int): The current frame number of the animation. This determines the 
+                     current simulation time and updates the plot accordingly.
+
+    Returns:
+        list: A list of plot elements (circles, trails, title) that are updated for the 
+              current frame of the simulation.
+    """
+
     #For axes limits
     global global_min_x, global_max_x, global_min_y, global_max_y, plot_positions_this_frame
 

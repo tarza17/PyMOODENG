@@ -1,7 +1,7 @@
 from platform import system
 
-import constants
-import anomaly
+from . import constants
+from . import anomaly
 import numpy as np
 
 def current_radius(r_p, e, theta):

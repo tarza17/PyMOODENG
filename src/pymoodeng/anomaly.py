@@ -71,6 +71,29 @@ class Anomaly(object):
 
 @dataclass
 class Anomaly:
+
+    """
+    Represents an orbital anomaly and provides conversions between 
+    mean (M), eccentric (E), and true (theta) anomalies.
+
+    Attributes:
+        value (float): The value of the anomaly.
+        type (Literal['M', 'E', 'theta']): The type of the anomaly:
+            - 'M': Mean anomaly
+            - 'E': Eccentric anomaly
+            - 'theta': True anomaly
+
+    Methods:
+        M(e: float) -> float:
+            Returns the mean anomaly, computed from the stored value if necessary.
+
+        E(e: float) -> float:
+            Returns the eccentric anomaly, computed from the stored value if necessary.
+
+        theta(e: float) -> float:
+            Returns the true anomaly, computed from the stored value if necessary.
+    """
+
     value: float
     type: Literal['M', 'E', 'theta']
 
@@ -132,9 +155,20 @@ def eccentric_anomaly_from_mean(e, M, tolerance=1e-10):
 '''
 
 def eccentric_anomaly_from_mean(e, M, tolerance=1e-8):  # Using relaxed tolerance too
-    '''
-    Calc eccenetric anomaly from mean anomaly using Newton-Raphson.
-    '''
+    """
+    Compute the eccentric anomaly from the mean anomaly using the Newton-Raphson method.
+
+    Args:
+        e (float): Orbital eccentricity (0 <= e < 1).
+        M (float): Mean anomaly in radians.
+        tolerance (float, optional): Convergence tolerance. Default is 1e-8.
+
+    Returns:
+        float: Eccentric anomaly in radians.
+
+    Raises:
+        ConvergenceError: If the Newton-Raphson iteration fails to converge within MAX_ITER iterations.
+    """
     Mnorm = np.fmod(M, 2 * np.pi)
 
     # Initial guess (Mnorm is usually good for Newton-Raphson)
@@ -166,44 +200,86 @@ def eccentric_anomaly_from_mean(e, M, tolerance=1e-8):  # Using relaxed toleranc
     return E
 
 def eccentric_anomaly_from_true(e, theta):
-    '''
-    Calc eccenetric anomaly from true anomaly
-    '''
+    """
+    Compute the eccentric anomaly from the true anomaly.
+
+    Args:
+        e (float): Orbital eccentricity (0 <= e < 1).
+        theta (float): True anomaly in radians.
+
+    Returns:
+        float: Eccentric anomaly in radians.
+    """
     E = np.atan2(np.sqrt(1 - e**2) * np.sin(theta), np.cos(theta) + e)
     E = np.mod(E, 2 * np.pi)
     return E
 
 def mean_anomaly_from_eccentric(e, E):
-    '''
-    Calc mean anomaly from eccenetric anomaly
-    '''
+    """
+    Compute the mean anomaly from the eccentric anomaly.
+
+    Args:
+        e (float): Orbital eccentricity (0 <= e < 1).
+        E (float): Eccentric anomaly in radians.
+
+    Returns:
+        float: Mean anomaly in radians.
+    """
     M = E - e * np.sin(E)
     M = np.mod(M, 2 * np.pi)
     return M
 
 
 def mean_anomaly_from_true(e, theta):
-    '''
-    Calc mean anomaly from true anomaly
-    '''
+    """
+    Compute the mean anomaly from the true anomaly.
+
+    Args:
+        e (float): Orbital eccentricity (0 <= e < 1).
+        theta (float): True anomaly in radians.
+
+    Returns:
+        float: Mean anomaly in radians.
+    """
     E = eccentric_anomaly_from_true(e, theta)
     M = E - e * np.sin(E)
     M = np.mod(M, 2 * np.pi)
     return M
 
 def true_anomaly_from_eccentric(e, E):
-    '''
-    Calc true anomaly from eccenetric anomaly
-    '''
+    """
+    Compute the true anomaly from the eccentric anomaly.
+
+    Args:
+        e (float): Orbital eccentricity (0 <= e < 1).
+        E (float): Eccentric anomaly in radians.
+
+    Returns:
+        float: True anomaly in radians.
+    """
     #theta = np.atan2(np.sqrt(1 - e**2) * np.sin(E), np.cos(E) + e)
     theta = np.arctan2(np.sqrt(1 - e ** 2) * np.sin(E), np.cos(E) + e) #Z
     theta = np.mod(theta, 2 * np.pi)
     return theta
 
 def true_anomaly_from_mean(e, M, tolerance=1e-10):
-    '''
-    Calc true anomaly from mean anomaly
-    '''
+    """
+    Compute the true anomaly from the mean anomaly.
+
+    This function internally computes the eccentric anomaly via Newton-Raphson, 
+    then converts it to the true anomaly.
+
+    Args:
+        e (float): Orbital eccentricity (0 <= e < 1).
+        M (float): Mean anomaly in radians.
+        tolerance (float, optional): Convergence tolerance for Newton-Raphson. Default is 1e-10.
+
+    Returns:
+        float: True anomaly in radians.
+
+    Raises:
+        ConvergenceError: If Newton-Raphson fails to converge within MAX_ITER iterations.
+    """
     E = eccentric_anomaly_from_mean(e, M, tolerance)
     theta = true_anomaly_from_eccentric(e, E)
     return theta

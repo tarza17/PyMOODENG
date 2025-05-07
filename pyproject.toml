@@ -6,6 +6,14 @@ authors = [
   { name="Varga Benedek", email="varga.benedek@hallgato.ppke.hu" },
   { name="Kiss Márkus", email="kiss.markus@hallgato.ppke.hu" }
 ]
+dependencies = [
+  "numpy >= 2.2.4" ,
+  "pandas >= 2.2.3" ,
+  "matplotlib >= 3.10.1" ,
+  "pyqt5  >= 5.15.11" ,
+  "sphinx >= 8.2.3" ,
+  "sphinx_rtd_theme >= 3.0.2"
+]
 description = "A Python package for simple system simulations and potential transition fuel calculations."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -14,7 +22,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 license = "MIT"
-license-files = ["LICEN[CS]E*"]
+license-files = ["LICENCSE"]
 
 [project.urls]
 Homepage = "https://github.com/tarza17/PyMOODENG"
@@ -26,3 +34,9 @@ build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
 docs = ["sphinx", "sphinx_rtd_theme"]
+
+[tools.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
