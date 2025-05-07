@@ -1,0 +1,40 @@
+Metadata-Version: 2.4
+Name: pymoodeng
+Version: 0.0.1
+Summary: A Python package for simple system simulations and potential transition fuel calculations.
+Author-email: Tari Zalán <tari.zalan@itk.ppke.hu>, Varga Benedek <varga.benedek@hallgato.ppke.hu>, Kiss Márkus <kiss.markus@hallgato.ppke.hu>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/tarza17/PyMOODENG
+Project-URL: Issues, https://github.com/tarza17/PyMOODENG/issues
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=2.2.4
+Requires-Dist: pandas>=2.2.3
+Requires-Dist: matplotlib>=3.10.1
+Requires-Dist: pyqt5>=5.15.11
+Requires-Dist: sphinx>=8.2.3
+Requires-Dist: sphinx_rtd_theme>=3.0.2
+Provides-Extra: docs
+Requires-Dist: sphinx; extra == "docs"
+Requires-Dist: sphinx_rtd_theme; extra == "docs"
+
+# PyMOODENG
+
+# Introduction
+======================================================
+
+PyMOODENG is a Python package for simple system simulations and potential transition fuel calculations. This is a project created as an excersice for a Scientific
+Python course at PPKE ITK. The package aims to be user friendly, allowing users to easily set up and run simulations without needing extensive programming knowledge. It is designed to be flexible and extensible, making it suitable for a wide range of applications in the field of system simulations.
+
+It is still heavily under development, and many features are not yet implemented.
+
+Planned features include:
+- Ability to define custom planetary systems and celestial bodies
+- Support for  orbital mechanics calculations
+- Support of  a rudementary fuel calualtion system
+- Simple visualization tools for simulation results
+- Many more features, that may appear as bugs, but are actually features
+- A lot of bugs, that are not features
+

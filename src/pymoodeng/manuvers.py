@@ -9,7 +9,7 @@ from .orbital_conversions import (
     elements_4_apsides, radius_from_alt, alt_from_radius, impulse_from_finite, saved_state)
 
 class ReprHelperMixin:
-    """Mixin class to assist with object representation."""
+    """Provides a simplified __repr__ for classes to assist with debugging and logging."""
     def __repr__(self):
         return f"<{self.__class__.__name__}>"
 
@@ -24,6 +24,7 @@ from .anomaly import (
 _copy = copy
 
 class Operation(object):
+    """Abstract base class for orbital operations that can be applied, plotted, or combined."""
 
     def plot(self, orbit, plotter, next_operation=None):
         """Plot the operation on the given orbit using the provided plotter."""
@@ -48,7 +49,7 @@ class Operation(object):
 ########################################################################
         
 class ImpulseOperation(Operation):
-    """Class representing an impulse operation."""
+    """Base class for instantaneous velocity changes applied to an orbit (delta-v maneuvers)."""
 
     def __init__(self):
         super(ImpulseOperation, self).__init__()
@@ -61,7 +62,7 @@ class ImpulseOperation(Operation):
 ########################################################################
     
 class TimeOperation(Operation):
-    """Class representing a time operation."""
+    """Base class for time-based operations that propagate the orbit forward in time."""
 
     def __init__(self, time):
         super(TimeOperation, self).__init__()
@@ -77,7 +78,16 @@ class TimeOperation(Operation):
 
 
 class SetApocenterRadiusTo(ReprHelperMixin, ImpulseOperation): 
-    """Class representing an operation to set the apocenter radius."""
+    """
+    Set the apocenter radius of the orbit to a specified value.
+
+    This operation should be applied at the pericenter.
+
+    Parameters
+    ----------
+    r : float
+        The desired apocenter radius (in meters).
+    """
 
     def __init__(self, apocenter_radius, **kwargs):
         super(SetApocenterRadiusTo, self).__init__()
@@ -108,10 +118,7 @@ class SetApocenterRadiusTo(ReprHelperMixin, ImpulseOperation):
                 isinstance(next_operation, TimeOperation)):
                 orbit.apply_maneuver(next_operation)
                 f2 = orbit.theta
-                if f2  == 0:
-                    f2 = 2 * pi
-                else:
-                    f2 = 2 * pi
+                f2 = 2 * pi
 
         plotter.plot_apsides(orbit ,f1=0,  f2=f2 , label=label)
 
@@ -251,7 +258,16 @@ class ChangeApocenterBy(ReprHelperMixin, ImpulseOperation):
 ########################################################################
 
 class SetPericenterRadiusTo(ReprHelperMixin, ImpulseOperation):
-    '''Set pericenter radius to a given value, when applied must be at orbital apocenter.'''
+    """
+    Set the pericenter radius of the orbit to a specified value.
+
+    This operation should be applied at the apocenter.
+
+    Parameters
+    ----------
+    r : float
+        The desired pericenter radius (in meters).
+    """
 
 
     def __init__(self, pericenter_radius):
@@ -479,55 +495,40 @@ class ChangeInclanationBy(ReprHelperMixin, ImpulseOperation):
 #########################################################################
 
 class PropagateAnomalyTo(ReprHelperMixin, TimeOperation):
-    '''Propagate to a given time where the anomaly is equal to the given value
-    ONLY 1 VALUE TO BE PASSED '''
     def __init__(self, **kwargs):
-        super(PropagateAnomalyTo, self).__init__()
-
-        valid_args = ['M', 'E', 'f']
-        extra_args = set(kwargs.keys()) - valid_args
-
-        # Check if any extra arguments are provided
-        if extra_args:
-            raise ValueError(f"Invalid arguments: {extra_args}. Valid arguments are: {valid_args}")
-        
-        # Check if there is a value at all 
-        if not kwargs:
-            raise ValueError("At least one anomaly value must be passed.")
-        
-        # Check if only 1 value is passed
-        if sum([1 for anomaly in kwargs.values() if anomaly is not None]) != 1:
+        if len(kwargs) != 1:
             raise ValueError("Only one anomaly value must be passed.")
-        
 
-#########################################################################
-#########################################################################
+        key, value = list(kwargs.items())[0]
+        if key not in ['M', 'E', 'f']:
+            raise ValueError("Valid arguments are: M, E, f")
 
-def time(self, oribit):
+        self.key = key
+        self.anomaly = value
+        super().__init__(self.time_from_anomaly)
 
-    if self.key == 'M':
-        M = self.anomaly
-    if self.key == 'E':
-        M = mean_anomaly_from_eccentric(orbit.e, self.anomaly)
-    if self.key == 'theta':
-        M = mean_anomaly_from_true(orbit.e, self.anomaly)
+    def time_from_anomaly(self, orbit):
+        if self.key == 'M':
+            M = self.anomaly
+        elif self.key == 'E':
+            M = mean_anomaly_from_eccentric(orbit.e, self.anomaly)
+        elif self.key == 'f':
+            M = mean_anomaly_from_true(orbit.e, self.anomaly)
 
-    # Propagate one orbit if dest is "passed"
+        if M < orbit.M:
+            M += 2 * pi
 
-    if M < orbit.M:
-        M += 2 * pi
+        return (M - orbit.M) / orbit.n
 
-    return (M - orbit.M) / orbit.n
+    def __plot__(self, orbit, plotter, next_operation=None):
+        f1 = orbit.f1
+        orbit.t += self.time_delta(orbit)
+        f2 = orbit.f
 
-def __plot__(self, orbit, plotter, next_operation=None):
-    f1 = orbit.f1
-    orbit.t += self.time_delta(orbit)
-    f2 = orbit.f
+        plotter._plot_apsides(orbit , f2=f2 , propageted =True )
 
-    plotter._plot_apsides(orbit , f2=f2 , propageted =True )
-
-def __repr__(self, r):
-    r.keyword_with_value(self.key. self.anomaly)
+    def __repr__(self, r):
+        r.keyword_with_value(self.key. self.anomaly)
 
 #########################################################################
 #########################################################################

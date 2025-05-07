@@ -7,8 +7,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 
 import numpy as np
-from numpy import atan2, floor, fmod, ising, isnan
-from numpy import arrcos as acos
+from numpy import atan2, floor, fmod, isnan
 from numpy import cos, dot, sin, sqrt
 from numpy.linalg import norm
 #from math import atan2, floor, fmod, ising, isnan #chatqpt advice
@@ -19,14 +18,36 @@ from scipy.constants import pi
 
 @contextmanager
 def saved_state(orbit):
-    """Context manager to restore orbit upon leaving the block."""
+    """Context manager to restore the orbit state upon leaving the block.
+    
+    This context manager saves the state of the orbit object before executing
+    the code inside the block. After the block completes, the orbit object
+    is restored to its original state.
+    
+    Args:
+        orbit: The orbit object whose state is to be saved and restored.
+    
+    Yields:
+        None: This function is used within a `with` block and doesn't return a value.
+    """
     state = deepcopy(orbit.__dict__)
     yield
     orbit.__dict__.update(state)
 
 
 def lookahead(collection, fillvalue=None):
-    """Generates a series with lookahead to the next item."""
+    """Generates a series with lookahead to the next item in the collection.
+    
+    This function iterates over a collection and yields each item alongside the
+    next item in the collection. The last item is paired with the `fillvalue` (default `None`).
+    
+    Args:
+        collection: The collection (e.g., list or iterable) to iterate over.
+        fillvalue: The value to pair with the last item in the collection if no next item exists.
+    
+    Yields:
+        Tuple: A pair of the current and next items in the collection.
+    """
     first = True
     for next_item in collection:
         if first:
@@ -47,41 +68,92 @@ class Vector3D:
 
     @property
     def array(self):
+        """Returns the vector as a NumPy array.
+        
+        This property converts the 3D vector into a NumPy array for easier
+        manipulation with vectorized operations.
+        
+        Returns:
+            np.array: The vector as a NumPy array [x, y, z].
+        """
         return np.array([self.x, self.y, self.z])
 
     def cross(self, other):
+        """Calculates the cross product of this vector with another vector.
+        
+        Args:
+            other (Vector3D): The vector to compute the cross product with.
+        
+        Returns:
+            Vector3D: The resulting vector from the cross product.
+        """
         result = np.cross(self.array, other.array)
         return Vector3D(*result)
 
     def __add__(self, other):
+        """Adds this vector with another vector.
+        
+        Args:
+            other (Vector3D): The vector to add to this vector.
+        
+        Returns:
+            Vector3D: The resulting vector after addition.
+        """
         result = self.array + other.array
         return Vector3D(*result)
 
     def __sub__(self, other):
+        """Subtracts another vector from this vector.
+        
+        Args:
+            other (Vector3D): The vector to subtract from this vector.
+        
+        Returns:
+            Vector3D: The resulting vector after subtraction.
+        """
         result = self.array - other.array
         return Vector3D(*result)
 
     def __repr__(self):
+        """String representation of the Vector3D object."""
         return f"{self.__class__.__name__}(x={self.x}, y={self.y}, z={self.z})"
 
 # Position and Velocity types for clarity
 @dataclass
 class Position(Vector3D):
+    """Represents the position vector in 3D space."""
     pass
 
 @dataclass
 class Velocity(Vector3D):
+    """Represents the velocity vector in 3D space."""
     pass
 
 # Simple state container
 @dataclass
 class StateVector:
+    """Represents the state vector of an object, including its position and velocity.
+    
+    Attributes:
+        position (Position): The position vector of the object.
+        velocity (Velocity): The velocity vector of the object.
+    """
     position: Position
     velocity: Velocity
 
 # Orbital elements container
 @dataclass
 class OrbitalElements:
+    """Represents the orbital elements of an orbiting object.
+    
+    Attributes:
+        a (float): Semi-major axis.
+        e (float): Eccentricity.
+        i (float): Inclination.
+        raan (float): Right ascension of the ascending node.
+        arg_pe (float): Argument of periapsis.
+        theta (float): True anomaly.
+    """
     a: float        # semi-major axis
     e: float        # eccentricity
     i: float        # inclination
@@ -91,6 +163,15 @@ class OrbitalElements:
 
 # Angular momentum computation
 def angular_momentum(position: Position, velocity: Velocity) -> Vector3D:
+    """Calculates the angular momentum vector from position and velocity vectors.
+    
+    Args:
+        position (Position): The position vector.
+        velocity (Velocity): The velocity vector.
+    
+    Returns:
+        Vector3D: The resulting angular momentum vector.
+    """
     return position.cross(velocity)
 
 
@@ -148,22 +229,32 @@ def create_orbit(i, raan, arg_pe, theta) -> Tuple[Vector3D, Vector3D, Vector3D]:
 
     return U, V, W
 
-def angular_momentum(position: Position, velocity: Velocity) -> Vector3D:
-    """
-    Calculate the angular momentum vector from position and velocity vectors.
-    """
-    return position.cross(velocity)
-
 def node_vector(angular_momentum: Vector3D) -> Vector3D:
-    """
-    Calculate the node vector from the angular momentum vector.
+    """Calculates the node vector from the angular momentum vector.
+    
+    The node vector is perpendicular to both the orbital plane and the angular momentum vector.
+    
+    Args:
+        angular_momentum (Vector3D): The angular momentum vector.
+    
+    Returns:
+        Vector3D: The node vector.
     """
     tmp = Vector3D(0, 0, 1)
     return angular_momentum.cross(tmp)
 
 def eccentricity_vector(position: Position, velocity: Velocity, mu: float) -> Vector3D:
-    """
-    Calculate the eccentricity vector from position and velocity vectors.
+    """Calculates the eccentricity vector from position and velocity vectors.
+    
+    The eccentricity vector points from the center of the orbit toward periapsis.
+    
+    Args:
+        position (Position): The position vector.
+        velocity (Velocity): The velocity vector.
+        mu (float): The standard gravitational parameter.
+    
+    Returns:
+        Vector3D: The resulting eccentricity vector.
     """
     r = position.array
     v = velocity.array
@@ -172,8 +263,17 @@ def eccentricity_vector(position: Position, velocity: Velocity, mu: float) -> Ve
     return Vector3D(*e)
 
 def specific_energy(position: Position, velocity: Velocity, mu: float) -> float:
-    """
-    Calculate the specific energy of the orbit.
+    """Calculates the specific orbital energy of the object.
+    
+    Specific energy is the sum of kinetic and potential energy per unit mass.
+    
+    Args:
+        position (Position): The position vector.
+        velocity (Velocity): The velocity vector.
+        mu (float): The standard gravitational parameter.
+    
+    Returns:
+        float: The specific orbital energy.
     """
     r = norm(position.array)
     v = norm(velocity.array)
@@ -181,8 +281,15 @@ def specific_energy(position: Position, velocity: Velocity, mu: float) -> float:
 
 def elements_from_state(mu: float, position: Position, velocity: Velocity) -> OrbitalElements:
     #erőssen krdőjeles, mert tabbal készült
-    """
-    Calculate orbital elements from state vectors.
+    """Calculates the orbital elements from state vectors (position and velocity).
+    
+    Args:
+        mu (float): The standard gravitational parameter.
+        position (Position): The position vector.
+        velocity (Velocity): The velocity vector.
+    
+    Returns:
+        OrbitalElements: The calculated orbital elements (semi-major axis, eccentricity, etc.).
     """
     r = position.array
     v = velocity.array
@@ -255,20 +362,40 @@ def elements_from_state(mu: float, position: Position, velocity: Velocity) -> Or
 ##Conversions
 
 def radius_from_alt(altitude, radius_body):
-    """
-    Convert altitude to radius
+    """Converts altitude to radius from the center of the body.
+    
+    Args:
+        altitude (float): The altitude above the surface.
+        radius_body (float): The radius of the celestial body.
+    
+    Returns:
+        float: The radius from the center of the body.
     """
     return radius_body + altitude
 
 def alt_from_radius(radius, radius_body):
-    """
-    Convert radius to altitude
+    """Converts radius from the center of the body to altitude.
+    
+    Args:
+        radius (float): The radius from the center of the celestial body.
+        radius_body (float): The radius of the celestial body.
+    
+    Returns:
+        float: The altitude above the surface.
     """
     return radius - radius_body
 
 
 def impulse_from_finite(acceleration, duration):
-    """Return impulsive velocity delta for constant thrust finite burn."""
+    """Returns the impulsive velocity change for a finite thrust burn.
+    
+    Args:
+        acceleration (float): The acceleration produced by the thrust.
+        duration (float): The duration of the thrust application.
+    
+    Returns:
+        float: The impulsive velocity change.
+    """
     return acceleration * duration
 
 

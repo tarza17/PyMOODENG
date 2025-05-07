@@ -5,8 +5,8 @@ import matplotlib.animation as animation
 from matplotlib.widgets import Slider, Button, RadioButtons
 import matplotlib
 import inspect
-from objects import System
-import objects
+from .objects import System
+from . import objects
 from collections import deque
 
 matplotlib.use("TkAgg")
@@ -167,6 +167,15 @@ button_names = Button(ax_toggle_names, 'Names Visibility')
 button_names.on_clicked(toggle_names)
 
 def apply_global_limits_with_padding():
+    """
+    Applies the current global limits (with padding) to the axes of the plot. 
+    This ensures that the plotted area accommodates all bodies within the system, 
+    including a small buffer zone around the plot limits for better visualization.
+
+    The function adjusts the x and y limits of the plot based on the minimum 
+    and maximum positions observed so far, applying a padding factor to prevent 
+    excessive zooming or clipping.
+    """
     # Applies the current global limits (with padding) to the axes.
     global global_min_x, global_max_x, global_min_y, global_max_y
     if not limits_initialized:
@@ -319,7 +328,16 @@ def on_key(event):
             ani.event_source.start()
 
 def init():
+    """
+    Initializes the plot and simulation state at the start of the animation. 
+    This function prepares the plot by creating the bodies and setting up their 
+    initial positions and sizes. It also sets the initial axes limits and prepares 
+    the system for the first frame of the animation.
 
+    Returns:
+        list: A list of plot elements (circles, trails, title) that are created for the 
+              first frame of the simulation.
+    """
     global global_min_x, global_max_x, global_min_y, global_max_y, limits_initialized, user_interacting, c_scale, bodies_to_plot
 
     bodies_to_plot = sim.get_bodies()
@@ -420,6 +438,20 @@ def init():
 
 
 def animate(frame):
+    """
+    Updates the plot for each frame of the animation. The function recalculates the 
+    positions of the bodies in the system based on the current simulation time and updates 
+    the plot elements (bodies and trails) accordingly. The axes limits are also adjusted 
+    dynamically based on the bodies' positions to ensure they stay within view.
+
+    Args:
+        frame (int): The current frame number of the animation. This determines the 
+                     current simulation time and updates the plot accordingly.
+
+    Returns:
+        list: A list of plot elements (circles, trails, title) that are updated for the 
+              current frame of the simulation.
+    """
     global CURRENT_FRAME, global_min_x, global_max_x, global_min_y, global_max_y, plot_positions_this_frame, scale, c_scale, NAMES_VISIBLE, DAYS_PER_FRAME
 
     # Update the frame counter
