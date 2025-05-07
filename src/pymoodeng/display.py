@@ -41,7 +41,6 @@ Requirements:
 - A valid `objects.py` module with `Universe` and `Solar_system` definitions.
 
 """
-
 # fig, ax = plt.subplots(figsize=(10, 10))
 # ax.set_xlim(-1.5, 1.5)
 # ax.set_ylim(-1.5, 1.5)

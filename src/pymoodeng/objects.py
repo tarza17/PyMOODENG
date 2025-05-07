@@ -1,5 +1,4 @@
 from platform import system
-
 from . import constants
 from . import anomaly
 import numpy as np

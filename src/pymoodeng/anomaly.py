@@ -71,7 +71,6 @@ class Anomaly(object):
 
 @dataclass
 class Anomaly:
-
     """
     Represents an orbital anomaly and provides conversions between 
     mean (M), eccentric (E), and true (theta) anomalies.
