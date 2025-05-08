@@ -68,7 +68,6 @@ class Body:
 
 class System:
     _instances = []
-
     def __init__(self, name, center, orbiting=None):
         """
         Initializes an orbital System.
