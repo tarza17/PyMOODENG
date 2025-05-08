@@ -11,29 +11,33 @@ def current_radius(r_p, e, theta):
   return r
 
 class Orbit:
-    def __init__(self, peri_r = 0, tp = 0, e = 0):
-        """
+    """
         Contains orbital parameters.
+
         Args:
             e (float): Eccentricity of the orbital (0-1).
             peri_r (float): Perihelion radius.
             tp (float): Period time.
         """
+    def __init__(self, peri_r = 0, tp = 0, e = 0):
+        
         self.e = e # Eccentricity (0-1)
         self.peri_r = peri_r # Radius of perihelion (initial position)
         self.tp = tp # Period time
 
 class Body:
-  def __init__(self, name, color, mass, mean_diameter, orbit = None):
-        """
-        Initializes a Body object for 2D simulation.
-        Args:
-            name (str): Name of the body.
-            mass (float): Mass of the body (kg).
-            mean_diameter (float): Mean diameter of the body (m).
-            color (str): Color for plotting.
-            orbit (Orbit): Orbital parameters.
-        """
+    """
+    Initializes a Body object for 2D simulation.
+
+    Args:
+        name (str): Name of the body.
+        mass (float): Mass of the body (kg).
+        mean_diameter (float): Mean diameter of the body (m).
+        color (str): Color for plotting.
+        orbit (Orbit): Orbital parameters.
+    """
+    def __init__(self, name, color, mass, mean_diameter, orbit = None):
+        
         self.name = name
         self.mass = mass
         self.mean_diameter = mean_diameter
@@ -45,7 +49,7 @@ class Body:
           self.x = 0.0  # Initial x-coordinate
         self.y = 0.0  # Initial y-coordinate
 
-  def update(self, t, c_x = 0.0 , c_y = 0.0, logarithmic = False, depth = 1):
+    def update(self, t, c_x = 0.0 , c_y = 0.0, logarithmic = False, depth = 1):
         # Check if orbit exists before trying to use it
         if self.orbit is None:
              self.x = c_x
@@ -63,19 +67,20 @@ class Body:
         self.y = r * np.sin(true_anomaly)    # Local y coordinate
         self.y = self.y + c_y # Global y coordinate
 
-  def get_bodies(self):
+    def get_bodies(self):
         return [self]
 
 class System:
-    _instances = []
-    def __init__(self, name, center, orbiting=None):
-        """
+    """
         Initializes an orbital System.
 
         Args:
             center (Body): The central body of the system.
             bodies (list of Body, optional): List of bodies orbiting the center. Defaults to None.
         """
+    _instances = []
+    def __init__(self, name, center, orbiting=None):
+        
         self.__class__._instances.append(self)
         self.name = name
         self.center = center
@@ -162,14 +167,15 @@ class System:
        return bodies
 
 class Universe:
-    def __init__(self, systems=None):
-        """
+    """
         Initializes simulation space.
 
         Args:
             systems : List of systems in the simulation.
         """
 
+    def __init__(self, systems=None):
+        
         # if systems is None:
         #     systems = []
         if systems is not None:

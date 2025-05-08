@@ -4,7 +4,7 @@ Features
 Currently implemented features:
 
 - Simulation of a system with multiple bodies
-- Addition of addientional bodies
+- Creation of custom bodies
 
 
 Planned features include:

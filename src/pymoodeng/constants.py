@@ -6,6 +6,7 @@ and major Solar System objects, based on authoritative sources such as the IAU
 2009 resolutions and NASA planetary fact sheets.
 
 Constants include:
+
 - Speed of light and universal gravitational constant
 - Masses and gravitational parameters (μ) for the Sun, planets, and dwarf planets
 - Equatorial, polar, and mean radii (in kilometers)
@@ -14,12 +15,16 @@ Constants include:
 - Orbital periods (in seconds)
 
 Sources:
-- Masses and gravitational constants: IAU 2009 recommendations  
-https://iau-a3.gitlab.io/NSFA/IAU2009_consts.html
-- Radii and orbital elements:  
-https://orbital-mechanics.space/reference/planetary-parameters.html  
-https://nssdc.gsfc.nasa.gov/planetary/factsheet/  
-https://nssdc.gsfc.nasa.gov/planetary/factsheet/plutofact.html
+
+Masses and gravitational constants: IAU 2009 recommendations
+
+- https://iau-a3.gitlab.io/NSFA/IAU2009_consts.html
+
+Radii and orbital elements:  
+
+- https://orbital-mechanics.space/reference/planetary-parameters.html  
+- https://nssdc.gsfc.nasa.gov/planetary/factsheet/  
+- https://nssdc.gsfc.nasa.gov/planetary/factsheet/plutofact.html
 
 All distances are in kilometers, times in seconds, and masses in kilograms unless otherwise noted.
 
