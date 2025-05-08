@@ -43,8 +43,8 @@ Custom planetary system creation
     #Planet - Moon 
     #name in case its further reused
     example_planetsys = o.System(name = "planetsys", # name of the system, used to reference it
-            center = "b612" ,   # string, the center body 
-            orbiting = "Moondeng") # string or array, every object orbiting the center body
+            center = b612 ,   # center body 
+            orbiting = Moondeng) # body or array of bodies, every object orbiting the center body
 
     #"Sun" - (planet - moon) 
     example_system = o.System(name = "system", 
@@ -67,4 +67,4 @@ System simulation
     from pymoodeng import plotting as p
 
 
-    p.plot(example_system)  #Invite the created System to be animated
+    p.plot(example_system)  #Invite the created System to be animated (arguments: name (of system), END_DAY (ending day of simulation time), switching (changing between system during simulation enabled/disabled))
