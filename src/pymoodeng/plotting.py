@@ -5,10 +5,7 @@ import matplotlib.animation as animation
 from matplotlib.widgets import Slider, Button, RadioButtons
 import matplotlib
 import inspect
-from .objects import System
 from . import objects
-#from objects import System
-#import objects
 from collections import deque
 
 matplotlib.use("TkAgg")
@@ -579,7 +576,7 @@ def animate(frame):
 def list_systems():
     #print("Available systems:", system_names)
     available_systems = objects.System.get_all_instances()
-    system_names = [sys.name for sys in available_systems]
+    system_names = set([sys.name for sys in available_systems])
     return system_names
 
 # Plot a system (from outside)
@@ -618,7 +615,7 @@ def run_animation_gui(default_system_name="Solar system", END_DAY=DEFAULT_END_DA
     scale = initial_scale_val  # Update global scale
 
     available_systems = objects.System.get_all_instances()
-    system_names = [sys.name for sys in available_systems]
+    system_names = list(set([sys.name for sys in available_systems]))
 
     # Find the selected system
     try:
