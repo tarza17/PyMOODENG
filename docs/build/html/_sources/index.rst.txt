@@ -35,14 +35,14 @@ To install PyMOODENG, use:
 
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
    :caption: Contents:
 
    modules
    features
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Tutorials:
 
    example_code
