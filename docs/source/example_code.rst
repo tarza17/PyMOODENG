@@ -27,7 +27,7 @@ Custom planetary system creation
                     mean_diameter = 800000)
 
     #Classic planet creation example
-    b612 = o.Body(name = "b612",          # display name
+    b612 = o.Body(name = "b612",        # display name
                 color = "yellow",       # display color
                 mass = 1e8,             # Mass, future use
                 mean_diameter = 10000,  # Size of the planet, realtive to the other bodies within the system

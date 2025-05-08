@@ -22,7 +22,7 @@ It is still heavily under development, and many features are not yet implemented
 Installation Guide
 ==================
 
-To learn about curretnly working features, check the 'features' section. 
+To learn about currently working features, check the 'features' section. 
 
 For example usage, check the 'examples' section.
 
