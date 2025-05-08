@@ -1,6 +1,7 @@
-from platform import system
 from . import constants
 from . import anomaly
+#import constants
+#import anomaly
 import numpy as np
 
 def current_radius(r_p, e, theta):
@@ -292,11 +293,11 @@ Moon3 = Body(
     mean_diameter = constants.Moon_rm * 0.6,
     orbit = Orbit(constants.Moon_perihelion * 50, constants.Moon_T, constants.Moon_e))
 
-EarthMoon = System(name = "EarthMoon", center = Earth, orbiting = Moon)
+EarthMoon = System(name = "Earth, Moon", center = Earth, orbiting = Moon)
 
-SunEarthMoon = System(name="SunEarthMoon", center = Sun, orbiting = EarthMoon)
+SunEarthMoon = System(name="Sun, Earth, Moon", center = Sun, orbiting = EarthMoon)
 
-Solar_system = System(name="Solar_system", center = Sun, orbiting = [
+Solar_system = System(name="Solar system", center = Sun, orbiting = [
     Mercury,
     Venus,
     EarthMoon,
@@ -309,11 +310,11 @@ Solar_system = System(name="Solar_system", center = Sun, orbiting = [
     Eris
 ])
 
-Solar_system0 = System(name="Solar_system0", center = Sun, orbiting = [
+Solar_system0 = System(name="Inner solar system", center = Sun, orbiting = [
     Mercury,
     Venus,
     EarthMoon,
     Mars,
 ])
 
-Dwarfs = System(name="Dwarfs", center = Sun, orbiting = [Pluto, Eris])
+Dwarfs = System(name="Dwarves", center = Sun, orbiting = [Pluto, Eris])

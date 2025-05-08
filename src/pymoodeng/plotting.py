@@ -7,6 +7,8 @@ import matplotlib
 import inspect
 from .objects import System
 from . import objects
+#from objects import System
+#import objects
 from collections import deque
 
 matplotlib.use("TkAgg")
@@ -16,105 +18,122 @@ def get_system_instances():
     all_members = inspect.getmembers(objects)
     # Filtering for instances of System
     system_instances = [member for name, member in all_members if isinstance(member, System)]
-
     return system_instances
 
 available_systems = get_system_instances()
 system_names = [sys.name for sys in available_systems]
 
-
 # Creating the universe containing the desired system(s)
-sim = objects.Universe([objects.Solar_system])
-selected_system = objects.Solar_system
+#sim = objects.Universe([objects.Solar_system])
+#selected_system = objects.Solar_system
 
-# Interaction State
+
+# Global State Variables (modified by UI or animation loop)
 user_interacting = False
 pan_info = {'button': None, 'start_x': None, 'start_y': None, 'current_xlim': None, 'current_ylim': None}
-
-# Animation and simulation parameters
-SECONDS_PER_DAY = 24 * 3600
-START_DAY = 0
-END_DAY = 365*300
-
-# Animation speed control parameters
 PAUSE = False
-INTERVAL_MS = 20
-DAYS_PER_FRAME = 1
 CURRENT_FRAME = 0
-
-# Orbital Trail Settings
 TRAIL_VISIBLE = True
-MAX_TRAIL_POINTS = None
-TRAIL_COLOR = 'white'
-TRAIL_LINEWIDTH = 0.5
-TRAIL_ALPHA = 0.7
-
-# Plotting setup
-fig, ax = plt.subplots(figsize=(15,15))
 NAMES_VISIBLE = False
-
-# Background color (both figure and axes)
-fig.set_facecolor('black')
-ax.set_facecolor('black')
-
-# Aspect ratio set to equal to avoid distortion
-ax.set_aspect('equal', adjustable='box')
-
-# Labels and title
-ax.set_xlabel("X (m)", color="white")
-ax.set_ylabel("Y (m)", color="white")
-plot_title = ax.set_title("", color="white")
-
-# Adjust tick parameters
-ax.tick_params(axis='x', colors='white')
-ax.tick_params(axis='y', colors='white')
-
-# Adjust spine colors
-ax.spines['bottom'].set_color('white')
-ax.spines['top'].set_color('white')
-ax.spines['left'].set_color('white')
-ax.spines['right'].set_color('white')
-
-# Scaling factors for center body and other body sizes
 c_scale = 1
 scale = 1
 
+# Global Plot Object Placeholders
+fig, ax = None, None
+plot_title = None
+ani = None
+sim = None
+selected_system = None
+bodies_to_plot = None
+center_obj = None
+c_display_radius = 0.0
 
-# Global list to hold plot elements
 plot_elements = []
 trail_lines = []
 trajectory_history = {}
 plot_positions_this_frame = []
 
-bodies_to_plot = sim.get_bodies()
+# UI Element Placeholders
+radio_systems = None
+slider_c_scale = None
+slider_scale = None
+button_trail = None
+button_names = None
 
-# Create radio buttons for system selection
-ax_systems = plt.axes([0.8, 0.3, 0.15, 0.15])  # Position for the system selector
-radio_systems = RadioButtons(ax_systems, system_names)
-
-# Variables for sticky axes
+# Sticky Axes Variables
 global_min_x, global_max_x = np.inf, -np.inf
 global_min_y, global_max_y = np.inf, -np.inf
-limits_initialized = False # Flag to track if initial limits are set
+limits_initialized = False
 padding = 0.15
 
-c_display_radius = 0.0
-c_x, c_y = 0.0, 0.0
-center_obj = None
+# Constants
+SECONDS_PER_DAY = 24 * 3600
+START_DAY = 0
+DEFAULT_END_DAY = 365*300 # Example default
+DEFAULT_DAYS_PER_FRAME = 1 # Example default
+INTERVAL_MS = 20
+MAX_TRAIL_POINTS = None # Or your preferred default
+TRAIL_COLOR = 'white'
+TRAIL_LINEWIDTH = 0.5
+TRAIL_ALPHA = 0.7
 
-# Heuristic to find the "main" center if multiple systems exist
-# Prefers the center of the first system in the universe list
-if sim.all_elements and isinstance(sim.all_elements[0], objects.System):
-    center_obj_candidate = sim.all_elements[0].center
-    # Verify it's actually in the list of bodies to plot
-    center_obj = next((b for b in bodies_to_plot if b.name == center_obj_candidate.name), None)
+# Callback function for changing systems
+def switch_system(label):
+    global sim, bodies_to_plot, plot_elements, trail_lines, trajectory_history, center_obj, selected_system, CURRENT_FRAME
 
-if center_obj:
-    # Calculate the radius the center body will be displayed with
-    c_display_radius = (center_obj.mean_diameter / 2.0) * c_scale
-    # We'll get its actual position during the t=0 update in init(), this is just needed for shifting
-else:
-    print("Warning: Center body for shifting not definitively identified. Shifting might be inconsistent.")
+    # Reset the frame counter
+    CURRENT_FRAME = 0
+
+    # Find the selected system by name
+    selected_system = available_systems[system_names.index(label)]
+    sim = objects.Universe([selected_system])  # Update the simulation with the new system
+
+    # Clear all existing name texts from the axes
+    for text in ax.texts:
+        try:
+            text.remove()
+        except:
+            pass
+
+    # Reset plot elements and trajectory history
+    for patch in plot_elements:
+        try:
+            # Remove any name text attached to the patch
+            if hasattr(patch, 'name_text'):
+                try:
+                    patch.name_text.remove()
+                except:
+                    pass
+            patch.remove()
+        except ValueError:
+            pass
+    plot_elements.clear()
+
+    for line in trail_lines:
+        try:
+            line.remove()
+        except ValueError:
+            pass
+    trail_lines.clear()
+
+    trajectory_history.clear()
+
+    # Update bodies to plot based on the new system
+    bodies_to_plot = sim.get_bodies()
+
+    # Update center object for the new system
+    if sim.all_elements and isinstance(sim.all_elements[0], objects.System):
+        center_obj_candidate = sim.all_elements[0].center
+        center_obj = next((b for b in bodies_to_plot if b.name == center_obj_candidate.name), None)
+    else:
+        center_obj = None
+
+    # Reinitialize the simulation
+    init()  # Call the init function to set up the new system
+
+    # Restart the animation from frame 0
+    ani.frame_seq = ani.new_frame_seq()
+    print(f"Switched to system: {label}")
 
 # Callback functions for sliders
 def update_c_scale(val):
@@ -143,37 +162,14 @@ def toggle_names(event):
     global NAMES_VISIBLE
     NAMES_VISIBLE = not NAMES_VISIBLE
 
-
-# Create sliders
-ax_c_scale = plt.axes([0.8, 0.14, 0.15, 0.03])  # Position for c_scale slider
-slider_c_scale = Slider(ax_c_scale, ' ', 1, 10000.0, valinit=c_scale, color="white")
-slider_c_scale.label.set_color('white')
-slider_c_scale.label.set_text(f'Center Body Scale  ({c_scale:.2f}): ')
-slider_c_scale.on_changed(update_c_scale)
-
-ax_scale = plt.axes([0.8, 0.1, 0.15, 0.03])  # Position for scale slider
-slider_scale = Slider(ax_scale, ' ', 1, 10000.0, valinit=scale, color="white")
-slider_scale.label.set_color('white')
-slider_scale.label.set_text(f'Orbiting Bodies Scale ({scale:.2f}): ')
-slider_scale.on_changed(update_scale)
-
-# Create buttons
-ax_toggle_trail = plt.axes([0.8, 0.199, 0.15, 0.04])  # Position for toggle trail button
-button_trail = Button(ax_toggle_trail, 'Trails Visibility')
-button_trail.on_clicked(toggle_trail)
-
-ax_toggle_names = plt.axes([0.8, 0.249, 0.15, 0.04])  # Position for toggle names button
-button_names = Button(ax_toggle_names, 'Names Visibility')
-button_names.on_clicked(toggle_names)
-
 def apply_global_limits_with_padding():
     """
-    Applies the current global limits (with padding) to the axes of the plot. 
-    This ensures that the plotted area accommodates all bodies within the system, 
+    Applies the current global limits (with padding) to the axes of the plot.
+    This ensures that the plotted area accommodates all bodies within the system,
     including a small buffer zone around the plot limits for better visualization.
 
-    The function adjusts the x and y limits of the plot based on the minimum 
-    and maximum positions observed so far, applying a padding factor to prevent 
+    The function adjusts the x and y limits of the plot based on the minimum
+    and maximum positions observed so far, applying a padding factor to prevent
     excessive zooming or clipping.
     """
     # Applies the current global limits (with padding) to the axes.
@@ -326,37 +322,51 @@ def on_key(event):
             ani.event_source.stop()
         else:
             ani.event_source.start()
-
 def init():
     """
-    Initializes the plot and simulation state at the start of the animation. 
-    This function prepares the plot by creating the bodies and setting up their 
-    initial positions and sizes. It also sets the initial axes limits and prepares 
+    Initializes the plot and simulation state at the start of the animation.
+    This function prepares the plot by creating the bodies and setting up their
+    initial positions and sizes. It also sets the initial axes limits and prepares
     the system for the first frame of the animation.
 
     Returns:
-        list: A list of plot elements (circles, trails, title) that are created for the 
+        list: A list of plot elements (circles, trails, title) that are created for the
               first frame of the simulation.
     """
     global global_min_x, global_max_x, global_min_y, global_max_y, limits_initialized, user_interacting, c_scale, bodies_to_plot
 
-    bodies_to_plot = sim.get_bodies()
-
     user_interacting = False
 
+    for text in ax.texts:
+        try:
+            text.remove()
+        except:
+            pass
+
+    # Reset plot elements and trajectory history
     for patch in plot_elements:
         try:
+            # Remove any name text attached to the patch
+            if hasattr(patch, 'name_text'):
+                try:
+                    patch.name_text.remove()
+                except:
+                    pass
             patch.remove()
         except ValueError:
             pass
     plot_elements.clear()
 
     for line in trail_lines:
-        try: line.remove()
-        except ValueError: pass
+        try:
+            line.remove()
+        except ValueError:
+            pass
     trail_lines.clear()
 
-    trajectory_history.clear() # Clear history
+    trajectory_history.clear()
+
+    bodies_to_plot = sim.get_bodies()
 
     # --- Run simulation for the very first frame (t=0) ---
     sim.update(START_DAY * SECONDS_PER_DAY, logarithmic=False)
@@ -425,31 +435,24 @@ def init():
 
     apply_global_limits_with_padding()
 
-    '''
-    if x_range < 1e-9: x_range = abs(min_x_init) * 0.2 + 1e-9 if abs(min_x_init) > 1e-9 else 1e9
-    if y_range < 1e-9: y_range = abs(min_y_init) * 0.2 + 1e-9 if abs(min_y_init) > 1e-9 else 1e9
-    padding = 0.15
-    ax.set_xlim(min_x_init - x_range * padding, max_x_init + x_range * padding)
-    ax.set_ylim(min_y_init - y_range * padding, max_y_init + y_range * padding)
-    '''
     # Set initial title
-    plot_title.set_text(f"{selected_system.name} centric system at t = {START_DAY:.1f} days ({START_DAY/365.2425:.2f} years)")
+    plot_title.set_text(f"{selected_system.name} system at t = {START_DAY:.1f} days ({START_DAY/365.2425:.2f} years)")
     return plot_elements + trail_lines + [plot_title]
 
 
 def animate(frame):
     """
-    Updates the plot for each frame of the animation. The function recalculates the 
-    positions of the bodies in the system based on the current simulation time and updates 
-    the plot elements (bodies and trails) accordingly. The axes limits are also adjusted 
+    Updates the plot for each frame of the animation. The function recalculates the
+    positions of the bodies in the system based on the current simulation time and updates
+    the plot elements (bodies and trails) accordingly. The axes limits are also adjusted
     dynamically based on the bodies' positions to ensure they stay within view.
 
     Args:
-        frame (int): The current frame number of the animation. This determines the 
+        frame (int): The current frame number of the animation. This determines the
                      current simulation time and updates the plot accordingly.
 
     Returns:
-        list: A list of plot elements (circles, trails, title) that are updated for the 
+        list: A list of plot elements (circles, trails, title) that are updated for the
               current frame of the simulation.
     """
     global CURRENT_FRAME, global_min_x, global_max_x, global_min_y, global_max_y, plot_positions_this_frame, scale, c_scale, NAMES_VISIBLE, DAYS_PER_FRAME
@@ -566,20 +569,6 @@ def animate(frame):
             global_min_y = min(global_min_y, frame_min_y)
             global_max_y = max(global_max_y, frame_max_y)
 
-            # Update dynamic limits with padding
-            '''
-            if np.isinf(min_x): min_x, max_x, min_y, max_y = ax.get_xlim()[0], ax.get_xlim()[1], ax.get_ylim()[0], \
-            ax.get_ylim()[1]  # Use previous if error
-            x_range = max_x - min_x
-            y_range = max_y - min_y
-            # Prevent zero range if all objects are at one point
-            if x_range < 1e-9: x_range = abs(min_x) * 0.2 + 1e-9
-            if y_range < 1e-9: y_range = abs(min_y) * 0.2 + 1e-9
-            padding = 0.15
-            ax.set_xlim(min_x - x_range * padding, max_x + x_range * padding)
-            ax.set_ylim(min_y - y_range * padding, max_y + y_range * padding)
-            '''
-
         # Apply the potentially updated global limits with padding
         # This ensures the axes only expand or stay the same, never shrink
         apply_global_limits_with_padding()
@@ -590,93 +579,150 @@ def animate(frame):
         # Return iterable of plot elements that have been updated
     return plot_elements + trail_lines + [plot_title]
 
-# Callback function for changing systems
-def switch_system(label):
-    global sim, bodies_to_plot, plot_elements, trail_lines, trajectory_history, center_obj, selected_system, CURRENT_FRAME
+# List available systems
+def list_systems():
+    #print("Available systems:", system_names)
+    return system_names
 
-    # Reset the frame counter
+# Plot a system (from outside)
+def plot(name=selected_system, END_DAY = 365):
+    run_animation_gui(name, END_DAY, DEFAULT_DAYS_PER_FRAME)
+
+
+# --- Main function to set up and run the animation GUI ---
+def run_animation_gui(default_system_name="Solar system", END_DAY=DEFAULT_END_DAY,
+                      days_per_frame=DEFAULT_DAYS_PER_FRAME):
+    global fig, ax, plot_title, ani, sim, selected_system, bodies_to_plot, center_obj, c_display_radius
+    global radio_systems, slider_c_scale, slider_scale, button_trail, button_names
+    global c_scale, scale, limits_initialized, CURRENT_FRAME, PAUSE, user_interacting
+    global plot_elements, trail_lines, trajectory_history, plot_positions_this_frame
+    global global_min_x, global_max_x, global_min_y, global_max_y  # For resetting limits
+
+    # Reset states for a fresh run or system switch
     CURRENT_FRAME = 0
+    PAUSE = False
+    user_interacting = False
+    limits_initialized = False
+    global_min_x, global_max_x = np.inf, -np.inf
+    global_min_y, global_max_y = np.inf, -np.inf
 
-    # Find the selected system by name
-    selected_system = available_systems[system_names.index(label)]
-    sim = objects.Universe([selected_system])  # Update the simulation with the new system
-
-    # Clear all existing name texts from the axes
-    for text in ax.texts:
-        try:
-            text.remove()
-        except:
-            pass
-
-    # Reset plot elements and trajectory history
-    for patch in plot_elements:
-        try:
-            # Remove any name text attached to the patch
-            if hasattr(patch, 'name_text'):
-                try:
-                    patch.name_text.remove()
-                except:
-                    pass
-            patch.remove()
-        except ValueError:
-            pass
+    # Clear plot element lists that might persist from a previous run (if any)
     plot_elements.clear()
-
-    for line in trail_lines:
-        try:
-            line.remove()
-        except ValueError:
-            pass
     trail_lines.clear()
-
     trajectory_history.clear()
+    plot_positions_this_frame.clear()
 
-    # Update bodies to plot based on the new system
-    bodies_to_plot = sim.get_bodies()
+    # Set initial scales (these are module globals, reset them for this run)
+    # These could also be arguments to run_animation_gui if you want more control
+    initial_c_scale_val = 1
+    initial_scale_val = 1
+    c_scale = initial_c_scale_val  # Update global c_scale
+    scale = initial_scale_val  # Update global scale
 
-    # Update center object for the new system
+    # --- MOVED CODE STARTS HERE ---
+    # Find the selected system
+    try:
+        if not available_systems:  # Should have been populated on import
+            print("Error: No systems available from objects.py.")
+            return
+        selected_system_obj = available_systems[system_names.index(default_system_name)]
+    except (ValueError, IndexError):
+        print(f"Warning: Default system '{default_system_name}' not found. Using first available: {system_names[0]}")
+        selected_system_obj = available_systems[0]
+
+    selected_system = selected_system_obj  # Assign to global
+    sim = objects.Universe([selected_system_obj])  # Assign to global
+    bodies_to_plot = sim.get_bodies()  # Assign to global
+
+    # Plotting setup
+    fig, ax = plt.subplots(figsize=(15, 15))  # Assign to global fig, ax
+    fig.set_facecolor('black')
+    ax.set_facecolor('black')
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_xlabel("X (m)", color="white")
+    ax.set_ylabel("Y (m)", color="white")
+    plot_title = ax.set_title("", color="white")  # Assign to global
+    ax.tick_params(axis='x', colors='white')
+    ax.tick_params(axis='y', colors='white')
+    ax.spines['bottom'].set_color('white')
+    ax.spines['top'].set_color('white')
+    ax.spines['left'].set_color('white')
+    ax.spines['right'].set_color('white')
+
+    # Heuristic to find the "main" center
+    center_obj = None  # Reset global center_obj before finding new one
     if sim.all_elements and isinstance(sim.all_elements[0], objects.System):
         center_obj_candidate = sim.all_elements[0].center
         center_obj = next((b for b in bodies_to_plot if b.name == center_obj_candidate.name), None)
+
+    if center_obj:
+        # c_display_radius is calculated in init/animate based on global c_scale
+        pass  # No need to set c_display_radius here, init/animate will use global c_scale
     else:
-        center_obj = None
+        print("Warning: Center body for shifting not definitively identified. Shifting might be inconsistent.")
+        c_display_radius = 0.0  # Ensure it's zero if no center
 
-    # Reinitialize the simulation
-    init()  # Call the init function to set up the new system
+    # Create UI elements using the new fig
+    # Radio buttons
+    # Use fig.add_axes for more control if fig is created here
+    ax_systems_ui = fig.add_axes([0.8, 0.3, 0.15, 0.15])
+    radio_systems = RadioButtons(ax_systems_ui, system_names,
+                                 active=system_names.index(
+                                     default_system_name) if default_system_name in system_names else 0)
+    radio_systems.on_clicked(switch_system)  # switch_system is a global function
 
-    # Restart the animation from frame 0
-    ani.frame_seq = ani.new_frame_seq()
-    print(f"Switched to system: {label}")
+    # Sliders
+    ax_c_scale_ui = fig.add_axes([0.8, 0.14, 0.15, 0.03])
+    slider_c_scale = Slider(ax_c_scale_ui, ' ', 1, 5000.0, valinit=c_scale, color="white")
+    slider_c_scale.label.set_color('white')
+    slider_c_scale.label.set_text(f'Center Body Scale  ({c_scale:.2f}): ')
+    slider_c_scale.on_changed(update_c_scale)  # update_c_scale is a global function
 
+    ax_scale_ui = fig.add_axes([0.8, 0.1, 0.15, 0.03])
+    slider_scale = Slider(ax_scale_ui, ' ', 1, 5000.0, valinit=scale, color="white")
+    slider_scale.label.set_color('white')
+    slider_scale.label.set_text(f'Orbiting Bodies Scale ({scale:.2f}): ')
+    slider_scale.on_changed(update_scale)  # update_scale is a global function
 
-# Connect the radio button to the callback function
-radio_systems.on_clicked(switch_system)
+    # Buttons
+    ax_toggle_trail_ui = fig.add_axes([0.8, 0.199, 0.15, 0.04])
+    button_trail = Button(ax_toggle_trail_ui, 'Trails Visibility')
+    button_trail.on_clicked(toggle_trail)  # toggle_trail is a global function
 
-# Connect Event Handlers
-fig.canvas.mpl_connect('scroll_event', on_scroll)
-fig.canvas.mpl_connect('button_press_event', on_press)
-fig.canvas.mpl_connect('motion_notify_event', on_motion)
-fig.canvas.mpl_connect('button_release_event', on_release)
-fig.canvas.mpl_connect('key_press_event', on_key)
+    ax_toggle_names_ui = fig.add_axes([0.8, 0.249, 0.15, 0.04])
+    button_names = Button(ax_toggle_names_ui, 'Names Visibility')
+    button_names.on_clicked(toggle_names)  # toggle_names is a global function
 
-# Running the animation
+    # Connect Event Handlers to the new fig
+    fig.canvas.mpl_connect('scroll_event', on_scroll)
+    fig.canvas.mpl_connect('button_press_event', on_press)
+    fig.canvas.mpl_connect('motion_notify_event', on_motion)
+    fig.canvas.mpl_connect('button_release_event', on_release)
+    fig.canvas.mpl_connect('key_press_event', on_key)
 
-# Calculate the number of frames needed
-num_frames = int((END_DAY - START_DAY) / DAYS_PER_FRAME) + 1
+    # Animation
+    # Use END_DAY and days_per_frame passed as arguments
+    num_frames = int((END_DAY - START_DAY) / days_per_frame) + 1
+    # Update global DAYS_PER_FRAME if it's used directly in animate/init
+    # It's better if animate/init get this info or it's a well-defined global
+    # For now, animate uses global DAYS_PER_FRAME, so let's ensure it's set if changed by args
+    global DAYS_PER_FRAME  # Make sure we are affecting the global one if animate uses it
+    DAYS_PER_FRAME = days_per_frame  # Set the global for animate to use
 
-print(f"Starting animation: {num_frames} frames, {DAYS_PER_FRAME} day(s) per frame, interval={INTERVAL_MS}ms")
-print("\n--- Interactive Controls ---")
-print("Mouse Wheel: Zoom in/out")
-print("Left Mouse Button + Drag: Pan")
-print("Press 'space': Pause/Unpause animation")
-print("Press 'r': Reset view")
-print("--------------------------\n")
-# Create the animation object
-ani = animation.FuncAnimation(fig, animate, frames=num_frames,
-                              init_func=init, blit=False, interval=INTERVAL_MS,
-                              repeat=True) # repeat=False stops after one loop
+    print(f"Starting animation: {num_frames} frames, {DAYS_PER_FRAME} day(s) per frame, interval={INTERVAL_MS}ms")
+    print("\n--- Interactive Controls ---")
+    print("Mouse Wheel: Zoom in/out")
+    print("Left Mouse Button + Drag: Pan")
+    print("Press 'space': Pause/Unpause animation")
+    print("Press 'r': Reset view")
+    print("--------------------------\n")
 
-# Display the animation
-plt.show()
+    ani = animation.FuncAnimation(fig, animate, frames=num_frames,
+                                  init_func=init, blit=False, interval=INTERVAL_MS,
+                                  repeat=True)  # Assign to global ani
+    plt.show()  # This is blocking
+    print("Animation finished or window closed.")
 
-print("Animation finished or window closed.")
+if __name__ == "__main__":
+    # This block runs ONLY when the script is executed directly
+    run_animation_gui()

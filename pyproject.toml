@@ -1,6 +1,6 @@
 [project]
 name = "pymoodeng"#"Monitoring Orbitals Of Dynamic Environments, Navigating Galaxies"
-version = "0.0.1"
+version = "0.99"
 authors = [
   { name="Tari Zalán", email="tari.zalan@itk.ppke.hu" },
   { name="Varga Benedek", email="varga.benedek@hallgato.ppke.hu" },
