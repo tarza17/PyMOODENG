@@ -6,21 +6,25 @@
 Welcome to PyMOODENG's documentation!
 =====================================
 
-PyMOODENG is a Python package for simple system simulations and potential transition fuel calculations. This is a project created as an exercise for a Scientific Python course at PPKE ITK. The package aims to be user-friendly, allowing users to easily set up and run simulations without needing extensive programming knowledge. It is designed to be flexible and extensible, making it suitable for a wide range of applications in the field of system simulations.
+PyMOODENG  or is a Python package for simple system simulations and potential transition fuel calculations. 
+
+
+
+Introduction
+==================
+
+
+This is a project created as an exercise for a Scientific Python course at PPKE ITK. The package aims to be user-friendly, allowing users to easily set up and run simulations without needing extensive programming knowledge. It is designed to be flexible and extensible, making it suitable for a wide range of applications in the field of system simulations.
 
 It is still heavily under development, and many features are not yet implemented.
-
-Planned features include:
-- Support for orbital mechanics calculations  
-- Support for a rudimentary fuel calculation system  
-- Ability to define custom planetary systems and celestial bodies  
-- Simple visualization tools for simulation results  
-- Many more features that may appear as bugs, but are actually features  
-- A lot of bugs that are not features
 
 
 Installation Guide
 ==================
+
+To learn about curretnly working features, check the 'features' section. 
+
+For example usage, check the 'examples' section.
 
 To install PyMOODENG, use:
 
@@ -28,8 +32,19 @@ To install PyMOODENG, use:
 
    pip install pymoodeng
 
+
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    modules
+   features
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorials:
+
+   example_code
+
+
