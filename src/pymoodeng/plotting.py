@@ -13,14 +13,7 @@ from collections import deque
 
 matplotlib.use("TkAgg")
 
-def get_system_instances():
-    # Getting all members from the objects module
-    all_members = inspect.getmembers(objects)
-    # Filtering for instances of System
-    system_instances = [member for name, member in all_members if isinstance(member, System)]
-    return system_instances
-
-available_systems = get_system_instances()
+available_systems = objects.System.get_all_instances()
 system_names = [sys.name for sys in available_systems]
 
 # Creating the universe containing the desired system(s)
@@ -83,6 +76,9 @@ def switch_system(label):
 
     # Reset the frame counter
     CURRENT_FRAME = 0
+
+    available_systems = objects.System.get_all_instances()
+    system_names = [sys.name for sys in available_systems]
 
     # Find the selected system by name
     selected_system = available_systems[system_names.index(label)]
@@ -582,11 +578,12 @@ def animate(frame):
 # List available systems
 def list_systems():
     #print("Available systems:", system_names)
+    available_systems = objects.System.get_all_instances()
+    system_names = [sys.name for sys in available_systems]
     return system_names
 
 # Plot a system (from outside)
 def plot(system, END_DAY = 365, switching = True):
-
     run_animation_gui(system, END_DAY, DEFAULT_DAYS_PER_FRAME, switching)
 
 
@@ -619,6 +616,9 @@ def run_animation_gui(default_system_name="Solar system", END_DAY=DEFAULT_END_DA
     initial_scale_val = 1
     c_scale = initial_c_scale_val  # Update global c_scale
     scale = initial_scale_val  # Update global scale
+
+    available_systems = objects.System.get_all_instances()
+    system_names = [sys.name for sys in available_systems]
 
     # Find the selected system
     try:

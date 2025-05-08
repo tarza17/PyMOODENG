@@ -1,6 +1,6 @@
 
-import constants
-import anomaly
+from . import constants
+from . import anomaly
 import numpy as np
 
 def current_radius(r_p, e, theta):
@@ -285,14 +285,14 @@ Eris = Body(
 )
 
 Moon2 = Body(
-    name = "Moon",
+    name = "Moon2",
     color = "grey",
     mass = constants.Moon_m,
     mean_diameter = constants.Moon_rm,
     orbit = Orbit(constants.Moon_perihelion * 150, constants.Moon_T *2, constants.Moon_e * 0.2))
 
 Moon3 = Body(
-    name = "Moon",
+    name = "Moon3",
     color = "grey",
     mass = constants.Moon_m,
     mean_diameter = constants.Moon_rm * 0.6,
