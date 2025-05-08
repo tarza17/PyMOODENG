@@ -1,6 +1,6 @@
-from platform import system
-from . import constants
-from . import anomaly
+
+import constants
+import anomaly
 import numpy as np
 
 def current_radius(r_p, e, theta):
@@ -67,6 +67,7 @@ class Body:
         return [self]
 
 class System:
+    _instances = []
     def __init__(self, name, center, orbiting=None):
         """
         Initializes an orbital System.
@@ -75,6 +76,7 @@ class System:
             center (Body): The central body of the system.
             bodies (list of Body, optional): List of bodies orbiting the center. Defaults to None.
         """
+        self.__class__._instances.append(self)
         self.name = name
         self.center = center
         # self.orbiting_objects = orbiting if orbiting is not None else []
@@ -90,6 +92,10 @@ class System:
 
         # for body in self.orbiting_objects:
         #     self.all_bodies.append(body.get_bodies())
+    @classmethod
+    def get_all_instances(cls):
+        # Return the list of all instances
+        return cls._instances
 
     def add_body_or_system(self, body):
         self.orbiting_objects.append(body)
