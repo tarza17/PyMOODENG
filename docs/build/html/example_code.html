@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Examples code &mdash; pyMOODENG 0.4.0 documentation</title>
+  <title>Examples &mdash; pyMOODENG 0.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -42,10 +42,17 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Modules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="features.html">Features</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples code</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#custom-planetary-system-creation">Custom planetary system creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#system-simulation">System simulation</a></li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -62,7 +69,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Examples code</li>
+      <li class="breadcrumb-item active">Examples</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/example_code.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -72,8 +79,65 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="examples-code">
-<h1>Examples code<a class="headerlink" href="#examples-code" title="Link to this heading"></a></h1>
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h1>
+<p>Here are some examples of how to use the PyMOODENG package. These examples demonstrate the basic functionality of the package and how to set up and run simulations. All codes can be found at:</p>
+<a href="https://colab.research.google.com/drive/1iXGNVJ6Y_ZiRfuAODnWPdClr1Cmc5zVY?usp=sharing">Colab Notebook</a><section id="custom-planetary-system-creation">
+<h2>Custom planetary system creation<a class="headerlink" href="#custom-planetary-system-creation" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pymoodeng</span><span class="w"> </span><span class="kn">import</span> <span class="n">plotting</span> <span class="k">as</span> <span class="n">p</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymoodeng</span><span class="w"> </span><span class="kn">import</span> <span class="n">objects</span> <span class="k">as</span> <span class="n">o</span>
+
+<span class="c1">#Currently available systems</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">list_systems</span><span class="p">())</span>
+
+
+<span class="c1">#To create a planetary system, you first define a center, around witch planets orbit</span>
+<span class="n">Center</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">Body</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;HLX-1&quot;</span><span class="p">,</span>
+                <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;white&quot;</span><span class="p">,</span>
+                <span class="n">mass</span> <span class="o">=</span> <span class="mf">8e20</span><span class="p">,</span>
+                <span class="n">mean_diameter</span> <span class="o">=</span> <span class="mi">800000</span><span class="p">)</span>
+
+<span class="c1">#Classic planet creation example</span>
+<span class="n">b612</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">Body</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;b612&quot;</span><span class="p">,</span>          <span class="c1"># display name</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;yellow&quot;</span><span class="p">,</span>       <span class="c1"># display color</span>
+            <span class="n">mass</span> <span class="o">=</span> <span class="mf">1e8</span><span class="p">,</span>             <span class="c1"># Mass, future use</span>
+            <span class="n">mean_diameter</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>  <span class="c1"># Size of the planet, realtive to the other bodies within the system</span>
+            <span class="n">orbit</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">Orbit</span><span class="p">(</span><span class="n">peri_r</span> <span class="o">=</span> <span class="mf">2e8</span><span class="p">,</span> <span class="n">tp</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">))</span> <span class="c1">#parameters: peri_r = pericentricy, tp = periodtime , e = eccentricity</span>
+
+<span class="n">Moondeng</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">Body</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Moondeng&quot;</span><span class="p">,</span>
+                <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;palevioletred&quot;</span><span class="p">,</span>
+                <span class="n">mass</span> <span class="o">=</span> <span class="mi">1000000</span><span class="p">,</span>
+                <span class="n">mean_diameter</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
+                <span class="n">orbit</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">Orbit</span><span class="p">(</span><span class="n">peri_r</span> <span class="o">=</span> <span class="mf">1e5</span><span class="p">,</span> <span class="n">tp</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">))</span>
+
+<span class="c1">#Creation of a planetary system, which can be simulated</span>
+<span class="c1">#Planet - Moon</span>
+<span class="c1">#name in case its further reused</span>
+<span class="n">example_planetsys</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">System</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;planetsys&quot;</span><span class="p">,</span> <span class="c1"># name of the system, used to reference it</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="s2">&quot;b612&quot;</span> <span class="p">,</span>   <span class="c1"># string, the center body</span>
+        <span class="n">orbiting</span> <span class="o">=</span> <span class="s2">&quot;Moondeng&quot;</span><span class="p">)</span> <span class="c1"># string or array, every object orbiting the center body</span>
+
+<span class="c1">#&quot;Sun&quot; - (planet - moon)</span>
+<span class="n">example_system</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">System</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="n">Center</span><span class="p">,</span>
+        <span class="n">orbiting</span> <span class="o">=</span> <span class="p">[</span><span class="n">example_planetsys</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">Mars</span><span class="p">]</span>
+        <span class="p">)</span>
+
+<span class="c1">#Currently available systems</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">list_systems</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+<section id="system-simulation">
+<h2>System simulation<a class="headerlink" href="#system-simulation" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#DOES NOT WORK IN GOOGLE COLLAB, as it requires a pop up window to be opened</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymoodeng</span><span class="w"> </span><span class="kn">import</span> <span class="n">plotting</span> <span class="k">as</span> <span class="n">p</span>
+
+
+<span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">example_system</span><span class="p">)</span>  <span class="c1">#Invite the created System to be animated</span>
+</pre></div>
+</div>
+</section>
 </section>
 
 
