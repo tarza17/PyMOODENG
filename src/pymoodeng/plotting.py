@@ -585,13 +585,14 @@ def list_systems():
     return system_names
 
 # Plot a system (from outside)
-def plot(name=selected_system, END_DAY = 365):
-    run_animation_gui(name, END_DAY, DEFAULT_DAYS_PER_FRAME)
+def plot(system, END_DAY = 365, switching = True):
+
+    run_animation_gui(system, END_DAY, DEFAULT_DAYS_PER_FRAME, switching)
 
 
 # --- Main function to set up and run the animation GUI ---
 def run_animation_gui(default_system_name="Solar system", END_DAY=DEFAULT_END_DAY,
-                      days_per_frame=DEFAULT_DAYS_PER_FRAME):
+                      days_per_frame=DEFAULT_DAYS_PER_FRAME, switching = True):
     global fig, ax, plot_title, ani, sim, selected_system, bodies_to_plot, center_obj, c_display_radius
     global radio_systems, slider_c_scale, slider_scale, button_trail, button_names
     global c_scale, scale, limits_initialized, CURRENT_FRAME, PAUSE, user_interacting
@@ -619,7 +620,6 @@ def run_animation_gui(default_system_name="Solar system", END_DAY=DEFAULT_END_DA
     c_scale = initial_c_scale_val  # Update global c_scale
     scale = initial_scale_val  # Update global scale
 
-    # --- MOVED CODE STARTS HERE ---
     # Find the selected system
     try:
         if not available_systems:  # Should have been populated on import
@@ -665,11 +665,12 @@ def run_animation_gui(default_system_name="Solar system", END_DAY=DEFAULT_END_DA
     # Create UI elements using the new fig
     # Radio buttons
     # Use fig.add_axes for more control if fig is created here
-    ax_systems_ui = fig.add_axes([0.8, 0.3, 0.15, 0.15])
-    radio_systems = RadioButtons(ax_systems_ui, system_names,
+    if switching:
+        ax_systems_ui = fig.add_axes([0.8, 0.3, 0.15, 0.15])
+        radio_systems = RadioButtons(ax_systems_ui, system_names,
                                  active=system_names.index(
                                      default_system_name) if default_system_name in system_names else 0)
-    radio_systems.on_clicked(switch_system)  # switch_system is a global function
+        radio_systems.on_clicked(switch_system)  # switch_system is a global function
 
     # Sliders
     ax_c_scale_ui = fig.add_axes([0.8, 0.14, 0.15, 0.03])
