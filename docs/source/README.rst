@@ -3,7 +3,7 @@
 
 A toolbox for simple system simulations. 
 
-If you use *pyMOODENG* resource, please cite:  `This <https://pymoodeng.readthedocs.io/en/latest/>`__ as reference.
+If you use *pyMOODENG* resource, please cite:  `This <https://pymoodeng.readthedocs.io/en/latest/>`__ as reference. 
 
 Introduction
 -----------------
