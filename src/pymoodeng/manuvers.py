@@ -1,3 +1,5 @@
+'''Maanuvers for changing the orbit of a spacecraft.'''
+
 import warnings
 from copy import copy
 

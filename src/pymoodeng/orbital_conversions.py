@@ -1,3 +1,5 @@
+'''
+This module defines classes and functions for simulating celestial bodies and their orbits.'''
 #IMPORTS
 
 from __future__ import absolute_import, division, print_function

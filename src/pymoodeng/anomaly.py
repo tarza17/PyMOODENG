@@ -1,3 +1,5 @@
+'''Anomaly handling module'''
+
 # Using code from http://www.jgiesen.de/kepler/kepler.html
 # Implemnetation based on the following paper: [A Practical Method for Solving the Kepler Equation][1] by Marc A. Murison from the U.S. Naval Observatory
 # [1] https://www.researchgate.net/publication/271214938_A_Practical_Method_for_Solving_the_Kepler_Equation

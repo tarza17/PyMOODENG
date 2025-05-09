@@ -1,4 +1,5 @@
-
+'''
+This module defines classes and functions for simulating celestial bodies and their orbits.'''
 from . import constants
 from . import anomaly
 import numpy as np
