@@ -1,5 +1,5 @@
 '''
-This module defines simulates celestial bodies and their orbits.'''
+This module creates and displays the simulation of celestial bodies and their orbits.'''
 
 import numpy as np
 import matplotlib.pyplot as plt
