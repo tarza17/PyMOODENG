@@ -11,8 +11,6 @@ import inspect
 from . import objects
 from collections import deque
 
-matplotlib.use("TkAgg")
-
 available_systems = objects.System.get_all_instances()
 system_names = [sys.name for sys in available_systems]
 
