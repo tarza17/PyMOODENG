@@ -2,7 +2,7 @@
 
 A toolbox for simple system simulations. 
 
-If you use *pyMOODENG* resource, please cite:  `This <https://www.youtube.com/watch?v=xvFZjo5PgG0>`__ as reference.
+If you use *pyMOODENG* resource, please cite:  [This](https://www.youtube.com/watch?v=xvFZjo5PgG0) as reference.
 
 ## Introduction
 -----------------
@@ -29,18 +29,14 @@ Other features, that are in developement:
 # Installation
 -----------------
 
-To install *PyMOODENG*, use:
-
-.. code-block:: bash
-
-   pip install pymoodeng
+To install *PyMOODENG*, use: 
+*** pip install pymoodeng ***
 
 
-pip project: `pyMOODENG <https://pypi.org/project/pymoodeng/>`_
+pip project: [pyMOODENG](https://pypi.org/project/pymoodeng/)
 
 
-For more details see the `pyMOODENG example
-code <https://pyppg.readthedocs.io/en/latest/example_code.html>`__
+For more details see the [pyMOODENG example code](https://pyppg.readthedocs.io/en/latest/example_code.html)
 
 # Requirements
 -----------------
@@ -69,7 +65,7 @@ All the python requirements are installed when the toolbox is intalled via pip, 
 # Usage
 -----------------
 
-For example usage, see the `example code <https://pymoodeng.readthedocs.io/en/latest/example_code.html>`__
+For example usage, see the [pyMOODENG example code](https://pyppg.readthedocs.io/en/latest/example_code.html)
 
 # Documentation
 -----------------
