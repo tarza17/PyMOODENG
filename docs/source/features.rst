@@ -1,16 +1,15 @@
 Features
 =========================
 
-Currently implemented features:
+The current working features, that can be used:
 
-- Simulation of a system with multiple bodies
-- Creation of custom bodies
+- Ability to define custom planetary systems and celestial bodies
+- Simple visualization tools for simulation results
 
+Other features, that are in developement:
 
-Planned features include:
-
-- Support for orbital mechanics calculations  
-- Support for a rudimentary fuel calculation system  
-- Ability to define custom planetary systems and celestial bodies  via imports 
-- Many more features that may appear as bugs, but are actually features  
-- A lot of bugs that are not features
+- Support for  orbital mechanics calculations (Code implmeneted, but does not work properly with dynamic plotting)
+- Support of  a rudementary fuel calualtion system (Reliant on orbital mechanics calculations)
+- True gravitational attraction calculations, and representation 
+- Many more features, that my appear as bugs, but are actually features
+- A lot of bugs, that are not features

@@ -1,16 +1,17 @@
-# *PyMOODENG* toolbox documentation
+*PyMOODENG* toolbox documentation
+==============================================================
 
 A toolbox for simple system simulations. 
 
 If you use *pyMOODENG* resource, please cite:  `This <https://www.youtube.com/watch?v=xvFZjo5PgG0>`__ as reference.
 
-## Introduction
+Introduction
 -----------------
 
 *PyMOODENG* is a Python package for simple system simulations and potential transition fuel calculations. This is a project created as an excersice for a Scientific
 Python course at PPKE ITK. The package aims to be user friendly, allowing users to easily set up and run simulations without needing extensive programming knowledge. It is designed to be flexible and extensible, making it suitable for a wide range of applications in the field of system simulations.
 
-# Descripion
+Descripion
 -----------------
 
 The current working features, that can be used:
@@ -26,7 +27,7 @@ Other features, that are in developement:
 - Many more features, that my appear as bugs, but are actually features
 - A lot of bugs, that are not features
 
-# Installation
+Installation
 -----------------
 
 To install *PyMOODENG*, use:
@@ -42,7 +43,7 @@ pip project: `pyMOODENG <https://pypi.org/project/pymoodeng/>`_
 For more details see the `pyMOODENG example
 code <https://pyppg.readthedocs.io/en/latest/example_code.html>`__
 
-# Requirements
+Requirements
 -----------------
 
 Python >= 3.11
@@ -66,12 +67,12 @@ scipy >= 1.15.2
 All the python requirements are installed when the toolbox is intalled via pip, so theres no need for additional installantions.
 
 
-# Usage
+Usage
 -----------------
 
 For example usage, see the `example code <https://pymoodeng.readthedocs.io/en/latest/example_code.html>`__
 
-# Documentation
+Documentation
 -----------------
 
 https://pymoodeng.readthedocs.io/en/latest/

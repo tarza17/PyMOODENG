@@ -6,33 +6,7 @@
 Welcome to PyMOODENG's documentation!
 =====================================
 
-PyMOODENG  or is a Python package for simple system simulations and potential transition fuel calculations. 
-
-
-
-Introduction
-==================
-
-
-This is a project created as an exercise for a Scientific Python course at PPKE ITK. The package aims to be user-friendly, allowing users to easily set up and run simulations without needing extensive programming knowledge. It is designed to be flexible and extensible, making it suitable for a wide range of applications in the field of system simulations.
-
-It is still heavily under development, and many features are not yet implemented.
-
-
-Installation Guide
-==================
-
-To learn about currently working features, check the 'features' section. 
-
-For example usage, check the 'examples' section.
-
-To install PyMOODENG, use:
-
-.. code-block:: bash
-
-   pip install pymoodeng
-
-
+.. include:: README.rst
 
 .. toctree::
    :maxdepth: 1
@@ -48,3 +22,9 @@ To install PyMOODENG, use:
    example_code
 
 
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
