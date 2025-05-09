@@ -9,14 +9,14 @@ Welcome to PyMOODENG's documentation!
 .. include:: README.rst
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Contents:
 
    modules
    features
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Tutorials:
 
    example_code
