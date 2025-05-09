@@ -2,7 +2,7 @@
 
 A toolbox for simple system simulations. 
 
-If you use *pyMOODENG* resource, please cite:  [This](https://www.youtube.com/watch?v=xvFZjo5PgG0) as reference.
+If you use *pyMOODENG* resource, please cite:  [This](https://pymoodeng.readthedocs.io/en/latest/) as reference.
 
 ## Introduction
 -----------------
