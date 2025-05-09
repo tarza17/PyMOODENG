@@ -1,5 +1,5 @@
 ﻿pymoodeng.plotting
-==================
+===================
 
 .. automodule:: pymoodeng.plotting
 
