@@ -1,5 +1,5 @@
 '''
-This module defines simulates celestial bodies and their orbits.'''
+This module creates and displays the simulation of celestial bodies and their orbits.'''
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,8 +10,6 @@ import matplotlib
 import inspect
 from . import objects
 from collections import deque
-
-matplotlib.use("TkAgg")
 
 available_systems = objects.System.get_all_instances()
 system_names = [sys.name for sys in available_systems]
@@ -72,6 +70,7 @@ TRAIL_ALPHA = 0.7
 
 # Callback function for changing systems
 def switch_system(label):
+    """ Switches between available systems, called by a radio button on the GUI (if enabled) """
     global sim, bodies_to_plot, plot_elements, trail_lines, trajectory_history, center_obj, selected_system, CURRENT_FRAME
 
     # Reset the frame counter
@@ -133,6 +132,7 @@ def switch_system(label):
 
 # Callback functions for sliders
 def update_c_scale(val):
+    """ Changes the scaling of the central body, called by a slider on the GUI """
     global c_scale
     c_scale = val
     slider_c_scale.label.set_text(f'Center Body Scale  ({c_scale:.2f}): ')  # Update label text
@@ -144,6 +144,7 @@ def update_c_scale(val):
         trajectory_history[i].clear()  # Clear the history for each body
 
 def update_scale(val):
+    """ Changes the scaling of the oribiting bodies, called by a slider on the GUI """
     global scale
     scale = val
     slider_scale.label.set_text(f'Orbiting Bodies Scale ({scale:.2f}): ')  # Update label text
@@ -151,10 +152,12 @@ def update_scale(val):
 
 # Callback functions for buttons
 def toggle_trail(event):
+    """ Toggles the visibility of orbital trails, called by a button on the GUI """
     global TRAIL_VISIBLE
     TRAIL_VISIBLE = not TRAIL_VISIBLE
 
 def toggle_names(event):
+    """ Toggles the visibility of body names, called by a button on the GUI """
     global NAMES_VISIBLE
     NAMES_VISIBLE = not NAMES_VISIBLE
 
@@ -262,7 +265,7 @@ def on_release(event):
         pan_info = {'button': None, 'start_x': None, 'start_y': None, 'current_xlim': None, 'current_ylim': None}
 
 def on_key(event):
-    """Handle key press events, e.g., reset view."""
+    """Handle key press events, e.g., reset view, pause animation."""
     global user_interacting, global_min_x, global_max_x, global_min_y, global_max_y, PAUSE, c_scale
     if event.key == 'r': # 'r' for reset
         user_interacting = False
@@ -577,19 +580,21 @@ def animate(frame):
 
 # List available systems
 def list_systems():
-    #print("Available systems:", system_names)
+    """ Returns a set of the names of available systems """
     available_systems = objects.System.get_all_instances()
     system_names = set([sys.name for sys in available_systems])
     return system_names
 
 # Plot a system (from outside)
 def plot(system, END_DAY = 365, switching = True):
+    """ Calls the run_animation_gui function with the selected system, ending day, and with switching enabled/disabled """
     run_animation_gui(system, END_DAY, DEFAULT_DAYS_PER_FRAME, switching)
 
 
 # --- Main function to set up and run the animation GUI ---
 def run_animation_gui(default_system_name="Solar system", END_DAY=DEFAULT_END_DAY,
                       days_per_frame=DEFAULT_DAYS_PER_FRAME, switching = True):
+    """ Main function to set up and run the animation GUI. """                      
     global fig, ax, plot_title, ani, sim, selected_system, bodies_to_plot, center_obj, c_display_radius
     global radio_systems, slider_c_scale, slider_scale, button_trail, button_names
     global c_scale, scale, limits_initialized, CURRENT_FRAME, PAUSE, user_interacting
