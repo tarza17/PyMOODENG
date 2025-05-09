@@ -26,6 +26,9 @@ Other features, that are in developement:
 - Many more features, that my appear as bugs, but are actually features
 - A lot of bugs, that are not features
 
+
+![](figs/toolbox_sketch.png)
+
 # Installation
 -----------------
 

@@ -27,6 +27,10 @@ Other features, that are in developement:
 - Many more features, that my appear as bugs, but are actually features
 - A lot of bugs, that are not features
 
+
+.. image:: ../../figs/toolbox_sketch.png
+   :align: center
+
 Installation
 -----------------
 
